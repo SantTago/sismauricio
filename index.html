@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mauricio.Sis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="cloud">☁</span><strong>auricio.Sis</strong></div>
+      <nav>
+        <button class="nav-item active" data-view="agenda"><span>▦</span> Agenda</button>
+        <button class="nav-item" data-view="pacientes"><span>👥</span> Pacientes</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-btn">☰</button>
+        <!--div class="global-search">🔍 <input id="globalSearch" placeholder="Procurar" /></div>-->
+        <select class="clinic-select"><option>CLINICAL</option></select>
+        <span class="top-link">Chat</span>
+        <span class="top-sep">|</span>
+        <span>⚙</span>
+        <span class="avatar"> </span>
+      </header>
+
+      <section id="agenda" class="view active-view">
+        <div class="content-toolbar">
+          <button class="secondary-btn" id="fitPatientBtn">👥 Encaixar paciente</button>
+          <div class="search-wrap">
+            <input class="toolbar-search-input" id="appointmentSearch" placeholder="Pesquisar agendamento" />
+            <button class="search-appointment">🔍</button>
+          </div>
+        </div>
+
+        <div class="agenda-layout">
+          <aside class="agenda-side">
+            <button class="today-btn" id="goTodayBtn">Ver o dia de hoje</button>
+            <div class="mode-toggle">
+              <button class="mode-btn selected" data-mode="day">Dia</button>
+              <button class="mode-btn" data-mode="week">Semana</button>
+            </div>
+            <div class="calendar-card">
+              <div class="calendar-head"><button id="prevMonthBtn">«</button><strong id="calendarTitle">Junho 2026</strong><button id="nextMonthBtn">»</button></div>
+              <div class="weekdays"><span>Do</span><span>Se</span><span>Te</span><span>Qu</span><span>Qu</span><span>Se</span><span>Sa</span></div>
+              <div class="days" id="daysGrid"></div>
+            </div>
+            <div class="note-card">
+              <div class="note-head"><strong>Lembretes de <span id="noteDateLabel"></span></strong><button id="editNoteBtn" class="mini-link">✎</button></div>
+              <textarea id="dayNoteText" rows="4" placeholder="Clique para editar"></textarea>
+            </div>
+            <button class="save-note" id="saveNoteBtn">Salvar lembrete</button>
+            <div class="birthday-card"><strong>Aniversariantes</strong><span id="birthdayList">—</span></div>
+          </aside>
+
+          <div class="schedule-panel">
+            <div class="schedule-head schedule-grid">
+              <span>Hora</span><span>Paciente</span><span>Convênio</span><span>Procedimento</span><span>Tipo</span><span>Status</span><span></span>
+            </div>
+            <div id="scheduleRows"></div>
+            <div class="records-total">Total de registros: <strong id="totalRecords">0</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pacientes" class="view">
+        <div class="breadcrumbs">Início <span>›</span> Pacientes</div>
+        <div class="patients-toolbar">
+          <button class="new-patient-btn" id="newPatientBtn">Novo paciente</button>
+          <div>
+            <div class="patient-search"><input id="patientSearch" placeholder="Pesquisar paciente" /> 🔍</div>
+            <button class="advanced-filter" id="advancedFilterBtn">⚲ filtro avançado</button>
+          </div>
+        </div>
+        <div class="patients-table-wrap">
+          <table>
+            <thead><tr><th>Pront.</th><th>Nome</th><th>Data Nasc.</th><th>Celular</th><th>Telefone</th><th>Ações</th></tr></thead>
+            <tbody id="patientsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="prontuario" class="view">
+        <div class="breadcrumbs">Início <span>›</span> Pacientes <span>›</span> Prontuário</div>
+        <div class="record-actions-bar">
+          <button class="new-patient-btn small" id="newConsultationBtn">Nova consulta</button>
+        </div>
+        <div class="record-card">
+          <div class="record-summary" id="recordSummary"></div>
+          <div class="record-history">
+            <div class="section-header">
+              <strong>HISTÓRICO DE CONSULTAS</strong>
+              <button class="text-action" id="summarizeBtn">✧ RESUMIR COM IA</button>
+            </div>
+            <div class="record-tabs">
+              <button class="tab-btn active" data-record-tab="consultas">Consultas</button>
+              <button class="tab-btn" data-record-tab="arquivos">Arquivos</button>
+              <button class="tab-btn" data-record-tab="documentos">Documentos</button>
+            </div>
+            <div class="tab-panel active" id="record-tab-consultas">
+              <div id="consultationsList" class="consultation-list"></div>
+            </div>
+            <div class="tab-panel" id="record-tab-arquivos">
+              <div class="empty-state">Nenhum arquivo anexado.</div>
+            </div>
+            <div class="tab-panel" id="record-tab-documentos">
+              <div class="empty-state">Nenhum documento impresso recentemente.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="consulta" class="view">
+        <div class="breadcrumbs">Início <span>›</span> Pacientes <span>›</span> Prontuário <span>›</span> Nova consulta</div>
+        <div class="consult-header">
+          <div><strong id="consultPatientName">Paciente</strong> <span class="muted">(mais detalhes)</span></div>
+          <button class="text-action" id="summarizeHistoryBtn">✧ Resumir histórico de consultas com IA</button>
+        </div>
+        <div class="consult-card">
+          <div class="record-tabs consult-tabs">
+            <button class="tab-btn active" data-consult-tab="evolucao">EVOLUÇÃO</button>
+            <button class="tab-btn" data-consult-tab="anamnese-geral">ANAMNESE GERAL</button>
+            <button class="tab-btn" data-consult-tab="anamnese-dirigida">ANAMNESE DIRIGIDA</button>
+            <button class="tab-btn" data-consult-tab="outros">OUTROS</button>
+            <button class="tab-btn" data-consult-tab="exame-fisico">EXAME FÍSICO</button>
+            <button class="tab-btn" data-consult-tab="cirurgia">CIRURGIA</button>
+            <button class="tab-btn" data-consult-tab="imprimiveis">IMPRIMÍVEIS</button>
+            <button class="tab-btn" data-consult-tab="arquivos">ARQUIVOS</button>
+          </div>
+
+          <form id="consultationForm" class="consultation-form">
+            <div class="tab-panel active" id="consult-tab-evolucao">
+              <div class="field-grid two-up">
+                <label class="full">Avaliação<textarea name="avaliacao" rows="6"></textarea></label>
+                <label>Impressão<textarea name="impressao" rows="4"></textarea></label>
+                <label>Conduta<textarea name="conduta" rows="4"></textarea></label>
+                <label>Diagnóstico<textarea name="diagnostico" rows="4"></textarea></label>
+                <label>Hipótese Diagnóstica<textarea name="hipotese" rows="4"></textarea></label>
+              </div>
+            </div>
+            <div class="tab-panel" id="consult-tab-anamnese-geral">
+              <div class="field-grid two-up">
+                <label class="full">Queixa principal<textarea name="queixa" rows="5"></textarea></label>
+                <label>História da doença atual<textarea name="hda" rows="5"></textarea></label>
+                <label>Antecedentes<textarea name="antecedentes" rows="5"></textarea></label>
+              </div>
+            </div>
+            <div class="tab-panel" id="consult-tab-anamnese-dirigida">
+              <div class="field-grid two-up">
+                <label>Hábitos<textarea name="habitos" rows="5"></textarea></label>
+                <label>Sintomas associados<textarea name="sintomas" rows="5"></textarea></label>
+                <label class="full">Medicações em uso<textarea name="medicacoes" rows="5"></textarea></label>
+              </div>
+            </div>
+            <div class="tab-panel" id="consult-tab-outros">
+              <div class="field-grid">
+                <label class="full">Outras observações<textarea name="outras_obs" rows="8"></textarea></label>
+              </div>
+            </div>
+            <div class="tab-panel" id="consult-tab-exame-fisico">
+              <div class="field-grid two-up">
+                <label>Peso<input name="peso" placeholder="Ex.: 75 kg" /></label>
+                <label>Altura<input name="altura" placeholder="Ex.: 1,72 m" /></label>
+                <label class="full">Exame físico<textarea name="exame_fisico" rows="8"></textarea></label>
+              </div>
+            </div>
+            <div class="tab-panel" id="consult-tab-cirurgia">
+              <div class="field-grid">
+                <label class="full">Detalhes cirúrgicos<textarea name="cirurgia" rows="8"></textarea></label>
+              </div>
+            </div>
+            <div class="tab-panel" id="consult-tab-imprimiveis">
+              <div class="field-grid two-up">
+                <label>Atestado<textarea name="atestado" rows="6"></textarea></label>
+                <label>Receituário<textarea name="receituario" rows="6"></textarea></label>
+              </div>
+            </div>
+            <div class="tab-panel" id="consult-tab-arquivos">
+              <div class="upload-box">
+                <input type="file" id="consultFileInput" multiple />
+                <div id="consultFileList" class="file-list"></div>
+              </div>
+            </div>
+
+            <div class="consult-footer">
+              <div class="consult-meta">
+                <label>Data<input type="date" id="consultDate" name="data" /></label>
+                <div class="duration-box">Duração: <strong id="consultTimer">00:00:00</strong></div>
+              </div>
+              <div class="consult-actions">
+                <button type="button" class="cancel-btn" id="saveDraftBtn">Salvar rascunho</button>
+                <button type="submit" class="save-btn">Finalizar atendimento</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="cadastroPaciente" class="view">
+        <div class="breadcrumbs">Início <span>›</span> Pacientes <span>›</span> Cadastro</div>
+        <div class="patient-edit-card">
+          <div class="patient-edit-top">
+            <div class="record-tabs edit-tabs">
+              <button class="tab-btn active" data-edit-tab="dados-gerais">DADOS GERAIS</button>
+              <button class="tab-btn" data-edit-tab="outros">OUTROS</button>
+              <button class="tab-btn" data-edit-tab="observacoes">OBSERVAÇÕES</button>
+            </div>
+            <div class="edit-header-actions">
+              <button class="cancel-btn" id="printPatientBtn">Imprimir</button>
+              <button class="save-btn" id="savePatientPageBtn" type="button">Salvar paciente</button>
+            </div>
+          </div>
+
+          <form id="patientEditForm" class="patient-edit-form">
+            <div class="tab-panel active" id="edit-tab-dados-gerais">
+              <div class="edit-grid">
+                <div class="avatar-column">
+                  <div class="avatar-big" id="patientAvatarPreview">👤</div>
+                  <input type="file" id="patientPhotoInput" accept="image/*" />
+                  <button type="button" class="danger-btn" id="removePhotoBtn">✖ Excluir Foto</button>
+                </div>
+                <div class="fields-column">
+                  <div class="field-grid four-up">
+                    <label class="span-2">Nome do paciente:<input name="name" id="editName" placeholder="Nome do Paciente" /></label>
+                    <label>Prontuário:<input name="record" id="editRecord" placeholder="Prontuário" /></label>
+                    <div class="inline-checks">
+                      <label><input type="checkbox" name="dead" /> Em óbito</label>
+                      <label><input type="checkbox" name="inactive" /> Inativo</label>
+                      <label><input type="checkbox" name="blocked" /> Bloqueado</label>
+                    </div>
+
+                    <label>Sexo:<select name="gender" id="editGender"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option><option>Não informado</option></select></label>
+                    <label>TS:<select name="bloodType" id="editBloodType"><option value="">Selecione</option><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select></label>
+                    <label>Data de Nasc:<input name="birthIso" id="editBirth" type="date" /></label>
+                    <label>CEP:<input name="cep" id="editCep" placeholder="CEP" /></label>
+
+                    <label class="span-2">Rua/logradouro:<input name="address" id="editAddress" placeholder="Rua/Logradouro" /></label>
+                    <label>Nº:<input name="number" id="editNumber" placeholder="Número" /></label>
+                    <label>Bairro:<input name="district" id="editDistrict" placeholder="Bairro" /></label>
+
+                    <label>Tel. Residencial:<input name="phone" id="editPhone" placeholder="Telefone Residencial" /></label>
+                    <label>Celular:<input name="mobile" id="editMobile" placeholder="Celular" /></label>
+                    <label class="notify-wrap"><span>&nbsp;</span><span><input type="checkbox" name="notifications" id="editNotifications" /> Notificações</span></label>
+                    <label>Tel. Comercial:<input name="commercialPhone" id="editCommercialPhone" placeholder="Comercial" /></label>
+
+                    <label>Ramal:<input name="extension" id="editExtension" placeholder="Ramal" /></label>
+                    <label>Naturalidade:<input name="birthPlace" id="editBirthPlace" placeholder="Naturalidade" /></label>
+                    <label>Cidade:<input name="city" id="editCity" placeholder="Cidade" /></label>
+                    <label>Estado:<input name="state" id="editState" placeholder="UF" /></label>
+
+                    <label>Profissão:<input name="profession" id="editProfession" placeholder="Profissão" /></label>
+                    <label>Cônjuge:<input name="spouse" id="editSpouse" placeholder="Cônjuge" /></label>
+                    <label>Pai:<input name="father" id="editFather" placeholder="Pai" /></label>
+                    <label>Mãe:<input name="mother" id="editMother" placeholder="Mãe" /></label>
+                  </div>
+                </div>
+              </div>
+              <div class="insurance-box">
+                <div class="insurance-head">CONVÊNIOS RELACIONADOS</div>
+                <div class="field-grid four-up insurance-fields">
+                  <label>Convênio/Plano<input name="insurance" id="editInsurance" placeholder="Convênio/Plano" /></label>
+                  <label>Nº Matrícula<input name="insuranceNumber" id="editInsuranceNumber" placeholder="Número da matrícula" /></label>
+                  <label>Validade<input name="insuranceValidity" id="editInsuranceValidity" placeholder="Validade" /></label>
+                  <label>Padrão Acomodação<input name="insuranceAccommodation" id="editInsuranceAccommodation" placeholder="Padrão Acomodação" /></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="edit-tab-outros">
+              <div class="field-grid three-up padded-panel">
+                <label>CPF<input name="cpf" id="editCpf" placeholder="000.000.000-00" /></label>
+                <label>RG<input name="rg" id="editRg" placeholder="RG" /></label>
+                <label>E-mail<input name="email" id="editEmail" placeholder="email@exemplo.com" type="email" /></label>
+                <label class="full">Convênios adicionais<textarea name="insuranceNotes" id="editInsuranceNotes" rows="6"></textarea></label>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="edit-tab-observacoes">
+              <div class="field-grid padded-panel">
+                <label class="full">Observações<textarea name="observations" id="editObservations" rows="12"></textarea></label>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="appointmentModal">
+    <div class="modal">
+      <div class="modal-head"><h2>Novo agendamento</h2><button class="close-modal">×</button></div>
+      <form id="appointmentForm" class="form-grid">
+        <label class="full">Paciente<input required name="patient" id="appointmentPatient" placeholder="Digite o nome do paciente" list="patientsOptions" /></label>
+        <datalist id="patientsOptions"></datalist>
+        <label>Data<input required name="date" id="appointmentDate" type="date" /></label>
+        <label>Horário<input required name="time" type="time" value="09:00" /></label>
+        <label>Duração<select name="duration"><option>30 minutos</option><option>60 minutos</option></select></label>
+        <label>Convênio<input name="insurance" value="PLANO CLÍNICA" /></label>
+        <label>Procedimento<input name="procedure" value="CONSULTA" /></label>
+        <label>Tipo<select name="type"><option>Consulta</option><option>Retorno</option><option>Exame</option></select></label>
+        <label class="full">Observações<textarea name="notes" rows="3"></textarea></label>
+        <div class="modal-actions full"><button type="button" class="cancel-btn close-modal">Cancelar</button><button class="save-btn">Salvar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="status-menu" id="statusMenu"></div>
+  <script src="app.js"></script>
+</body>
+</html>
