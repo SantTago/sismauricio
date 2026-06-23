@@ -12,7 +12,7 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand"><span class="cloud">☁</span><strong>auricio.Sis</strong></div>
+      <div class="brand"><span class="cloud">☁</span><strong>Maurício.Sis</strong></div>
       <nav>
         <button class="nav-item active" data-view="agenda"><span>▦</span> Agenda</button>
         <button class="nav-item" data-view="pacientes"><span>👥</span> Pacientes</button>
@@ -21,12 +21,13 @@
 
     <main class="main">
       <header class="topbar">
-        <button class="menu-btn">☰</button>
+        <button class="menu-btn" id="menuToggle" aria-label="Abrir menu">☰</button>
+        <div class="mobile-logo"><span class="mobile-logo-cloud">☁</span><strong>Maurício.Sis</strong></div>
         <!--div class="global-search">🔍 <input id="globalSearch" placeholder="Procurar" /></div>-->
         <select class="clinic-select"><option>CLINICAL</option></select>
         <span class="top-link">Chat</span>
         <span class="top-sep">|</span>
-        <span>⚙</span>
+        <button class="settings-btn" id="settingsBtn" type="button" aria-label="Configurações">⚙</button>
         <span class="avatar"> </span>
       </header>
 
@@ -61,7 +62,7 @@
 
           <div class="schedule-panel">
             <div class="schedule-head schedule-grid">
-              <span>Hora</span><span>Paciente</span><span>Convênio</span><span>Procedimento</span><span>Tipo</span><span>Status</span><span></span>
+              <span>Hora</span><span>Paciente</span><span>Procedimento</span><span>Tipo</span><span class="status-head-label">Status</span><span></span>
             </div>
             <div id="scheduleRows"></div>
             <div class="records-total">Total de registros: <strong id="totalRecords">0</strong></div>
@@ -80,7 +81,7 @@
         </div>
         <div class="patients-table-wrap">
           <table>
-            <thead><tr><th>Pront.</th><th>Nome</th><th>Data Nasc.</th><th>Celular</th><th>Telefone</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Nome</th><th>Idade</th><th>Data Nasc.</th><th>Telefone</th><th>E-mail</th><th>Cidade</th><th>Ações</th></tr></thead>
             <tbody id="patientsBody"></tbody>
           </table>
         </div>
@@ -206,11 +207,7 @@
         <div class="breadcrumbs">Início <span>›</span> Pacientes <span>›</span> Cadastro</div>
         <div class="patient-edit-card">
           <div class="patient-edit-top">
-            <div class="record-tabs edit-tabs">
-              <button class="tab-btn active" data-edit-tab="dados-gerais">DADOS GERAIS</button>
-              <button class="tab-btn" data-edit-tab="outros">OUTROS</button>
-              <button class="tab-btn" data-edit-tab="observacoes">OBSERVAÇÕES</button>
-            </div>
+            <div class="form-title">Cadastro do paciente</div>
             <div class="edit-header-actions">
               <button class="cancel-btn" id="printPatientBtn">Imprimir</button>
               <button class="save-btn" id="savePatientPageBtn" type="button">Salvar paciente</button>
@@ -219,71 +216,38 @@
 
           <form id="patientEditForm" class="patient-edit-form">
             <div class="tab-panel active" id="edit-tab-dados-gerais">
-              <div class="edit-grid">
+              <div class="edit-grid compact-patient-grid">
                 <div class="avatar-column">
                   <div class="avatar-big" id="patientAvatarPreview">👤</div>
                   <input type="file" id="patientPhotoInput" accept="image/*" />
                   <button type="button" class="danger-btn" id="removePhotoBtn">✖ Excluir Foto</button>
                 </div>
                 <div class="fields-column">
-                  <div class="field-grid four-up">
-                    <label class="span-2">Nome do paciente:<input name="name" id="editName" placeholder="Nome do Paciente" /></label>
-                    <label>Prontuário:<input name="record" id="editRecord" placeholder="Prontuário" /></label>
-                    <div class="inline-checks">
-                      <label><input type="checkbox" name="dead" /> Em óbito</label>
-                      <label><input type="checkbox" name="inactive" /> Inativo</label>
-                      <label><input type="checkbox" name="blocked" /> Bloqueado</label>
-                    </div>
-
-                    <label>Sexo:<select name="gender" id="editGender"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option><option>Não informado</option></select></label>
-                    <label>TS:<select name="bloodType" id="editBloodType"><option value="">Selecione</option><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select></label>
-                    <label>Data de Nasc:<input name="birthIso" id="editBirth" type="date" /></label>
-                    <label>CEP:<input name="cep" id="editCep" placeholder="CEP" /></label>
-
-                    <label class="span-2">Rua/logradouro:<input name="address" id="editAddress" placeholder="Rua/Logradouro" /></label>
-                    <label>Nº:<input name="number" id="editNumber" placeholder="Número" /></label>
-                    <label>Bairro:<input name="district" id="editDistrict" placeholder="Bairro" /></label>
-
-                    <label>Tel. Residencial:<input name="phone" id="editPhone" placeholder="Telefone Residencial" /></label>
-                    <label>Celular:<input name="mobile" id="editMobile" placeholder="Celular" /></label>
-                    <label class="notify-wrap"><span>&nbsp;</span><span><input type="checkbox" name="notifications" id="editNotifications" /> Notificações</span></label>
-                    <label>Tel. Comercial:<input name="commercialPhone" id="editCommercialPhone" placeholder="Comercial" /></label>
-
-                    <label>Ramal:<input name="extension" id="editExtension" placeholder="Ramal" /></label>
-                    <label>Naturalidade:<input name="birthPlace" id="editBirthPlace" placeholder="Naturalidade" /></label>
-                    <label>Cidade:<input name="city" id="editCity" placeholder="Cidade" /></label>
-                    <label>Estado:<input name="state" id="editState" placeholder="UF" /></label>
-
-                    <label>Profissão:<input name="profession" id="editProfession" placeholder="Profissão" /></label>
-                    <label>Cônjuge:<input name="spouse" id="editSpouse" placeholder="Cônjuge" /></label>
-                    <label>Pai:<input name="father" id="editFather" placeholder="Pai" /></label>
-                    <label>Mãe:<input name="mother" id="editMother" placeholder="Mãe" /></label>
+                  <div class="field-grid three-up patient-essential-grid">
+                    <label class="span-2">Nome do paciente<input name="name" id="editName" placeholder="Nome do paciente" /></label>
+                    <label>Data de nascimento<input name="birthIso" id="editBirth" type="date" /></label>
+                    <label>Idade<input name="ageDisplay" id="editAge" placeholder="Calculada automaticamente" readonly /></label>
+                    <label>Telefone<input name="mobile" id="editMobile" placeholder="(00) 00000-0000" /></label>
+                    <label>E-mail<input name="email" id="editEmail" placeholder="email@exemplo.com" type="email" /></label>
+                    <label>CPF<input name="cpf" id="editCpf" placeholder="000.000.000-00" /></label>
+                    <label>Escolaridade
+                      <select name="schooling" id="editSchooling">
+                        <option value="">Selecione</option>
+                        <option>Educação infantil</option>
+                        <option>Ensino fundamental incompleto</option>
+                        <option>Ensino fundamental completo</option>
+                        <option>Ensino médio incompleto</option>
+                        <option>Ensino médio completo</option>
+                        <option>Ensino superior incompleto</option>
+                        <option>Ensino superior completo</option>
+                        <option>Pós-graduação</option>
+                      </select>
+                    </label>
+                    <label>Cidade<input name="city" id="editCity" placeholder="Cidade" /></label>
+                    <label>Filiação - mãe<input name="mother" id="editMother" placeholder="Nome da mãe" /></label>
+                    <label>Filiação - pai<input name="father" id="editFather" placeholder="Nome do pai" /></label>
                   </div>
                 </div>
-              </div>
-              <div class="insurance-box">
-                <div class="insurance-head">CONVÊNIOS RELACIONADOS</div>
-                <div class="field-grid four-up insurance-fields">
-                  <label>Convênio/Plano<input name="insurance" id="editInsurance" placeholder="Convênio/Plano" /></label>
-                  <label>Nº Matrícula<input name="insuranceNumber" id="editInsuranceNumber" placeholder="Número da matrícula" /></label>
-                  <label>Validade<input name="insuranceValidity" id="editInsuranceValidity" placeholder="Validade" /></label>
-                  <label>Padrão Acomodação<input name="insuranceAccommodation" id="editInsuranceAccommodation" placeholder="Padrão Acomodação" /></label>
-                </div>
-              </div>
-            </div>
-
-            <div class="tab-panel" id="edit-tab-outros">
-              <div class="field-grid three-up padded-panel">
-                <label>CPF<input name="cpf" id="editCpf" placeholder="000.000.000-00" /></label>
-                <label>RG<input name="rg" id="editRg" placeholder="RG" /></label>
-                <label>E-mail<input name="email" id="editEmail" placeholder="email@exemplo.com" type="email" /></label>
-                <label class="full">Convênios adicionais<textarea name="insuranceNotes" id="editInsuranceNotes" rows="6"></textarea></label>
-              </div>
-            </div>
-
-            <div class="tab-panel" id="edit-tab-observacoes">
-              <div class="field-grid padded-panel">
-                <label class="full">Observações<textarea name="observations" id="editObservations" rows="12"></textarea></label>
               </div>
             </div>
           </form>
@@ -300,17 +264,30 @@
         <datalist id="patientsOptions"></datalist>
         <label>Data<input required name="date" id="appointmentDate" type="date" /></label>
         <label>Horário<input required name="time" type="time" value="09:00" /></label>
-        <label>Duração<select name="duration"><option>30 minutos</option><option>60 minutos</option></select></label>
-        <label>Convênio<input name="insurance" value="PLANO CLÍNICA" /></label>
-        <label>Procedimento<input name="procedure" value="CONSULTA" /></label>
-        <label>Tipo<select name="type"><option>Consulta</option><option>Retorno</option><option>Exame</option></select></label>
+        <label>Procedimento<input name="procedure" value="CONSULTA" placeholder="Digite o procedimento" /></label>
+        <label>Tipo<select name="type" id="appointmentType"><option>Sessão</option><option>Avaliação neuropsicológica</option></select></label>
         <label class="full">Observações<textarea name="notes" rows="3"></textarea></label>
         <div class="modal-actions full"><button type="button" class="cancel-btn close-modal">Cancelar</button><button class="save-btn">Salvar</button></div>
       </form>
     </div>
   </div>
 
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
   <div class="status-menu" id="statusMenu"></div>
+
+  <div class="settings-panel" id="settingsPanel" aria-hidden="true">
+    <div class="settings-panel-head">
+      <strong>Dados do sistema</strong>
+      <button type="button" id="closeSettingsBtn" aria-label="Fechar">×</button>
+    </div>
+    <p>Os dados ficam salvos no navegador local deste aparelho.</p>
+    <button type="button" id="downloadDataBtn">⬇ Baixar dados</button>
+    <button type="button" id="importDataBtn">⬆ Enviar dados</button>
+    <button type="button" class="danger-option" id="clearDataBtn">🗑 Apagar dados</button>
+    <input type="file" id="importDataInput" accept="application/json,.json" hidden />
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

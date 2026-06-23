@@ -1,8 +1,9 @@
-const STORAGE_KEY = 'clinicflow_state_v2';
+const STORAGE_KEY = 'clinicflow_state_v5';
 const statuses = [
   ['✅','Confirmado'],['😕','Faltou'],['🕒','Em espera'],['🪑','Em consulta'],['👁️','Dilatação'],
   ['🙂','Atendido'],['🚩','Desmarcado'],['📵','Não atendeu'],['🔕','Desligado'],['✕','Não estava'],['🟢','WhatsApp'],['🧽','Limpar status']
 ];
+const appointmentTypes = ['Sessão','Avaliação neuropsicológica'];
 const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const state = loadState();
 let currentView = 'agenda';
@@ -39,23 +40,23 @@ function loadState() {
   if (raw) {
     try { return JSON.parse(raw); } catch (e) {}
   }
-  const seedDate = '2026-06-18';
+  const seedDate = '2026-06-21';
   return {
     selectedDate: seedDate,
     calendarDate: seedDate,
     viewMode: 'day',
     dayNotes: {[seedDate]: 'Lembrar de confirmar pacientes do turno da tarde.'},
     patients: [
-      seedPatient({id: uid(), record:'15259', name:'Wicherlanny Nery Carvalho', birth:'1987-06-04', mobile:'86999427503', phone:'', gender:'Feminino', insurance:'PLANO CLINICAL', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'16701', name:'Patrícia Rodrigues de Sousa', birth:'2004-08-16', mobile:'86988577757', phone:'', gender:'Feminino', insurance:'PLANO CLINICAL', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'5139', name:'Abdias Cassimiro da Silva', birth:'1931-11-08', mobile:'86994226580', phone:'', gender:'Masculino', insurance:'PARTICULAR', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'5662', name:'Abdias Pereira Rocha', birth:'1959-09-02', mobile:'981401633', phone:'', gender:'Masculino', insurance:'PLANO CLINICAL', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'5705', name:'Abdon Ferreira dos Santos', birth:'1943-07-30', mobile:'86994614249', phone:'', gender:'Masculino', insurance:'PLANO CLINICAL', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'12579', name:'Abdoral Felismino de Sousa', birth:'1954-03-18', mobile:'99984339010', phone:'', gender:'Masculino', insurance:'PARTICULAR', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'21953', name:'Abel Almeida Guimaraes', birth:'1983-05-20', mobile:'86998445840', phone:'', gender:'Masculino', insurance:'PLANO CLINICAL', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'24526', name:'Abel da Silva Marques', birth:'1986-06-14', mobile:'86988050512', phone:'', gender:'Masculino', insurance:'PARTICULAR', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'26747', name:'Aberlania da Costa Silva', birth:'1984-10-18', mobile:'86999244103', phone:'', gender:'Feminino', insurance:'PARTICULAR', city:'Teresina', state:'PI'}),
-      seedPatient({id: uid(), record:'29262', name:'Abigail Feitosa de Araújo', birth:'2002-11-17', mobile:'8695810385', phone:'', gender:'Feminino', insurance:'PLANO CLINICAL', city:'Teresina', state:'PI'})
+      seedPatient({id: uid(), record:'15259', name:'Wicherlanny Nery Carvalho', birth:'1987-06-21', mobile:'86999427503', phone:'', gender:'Feminino', schooling:'Ensino médio completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'16701', name:'Patrícia Rodrigues de Sousa', birth:'2004-06-21', mobile:'86988577757', phone:'', gender:'Feminino', schooling:'Ensino médio completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'5139', name:'Abdias Cassimiro da Silva', birth:'1931-06-21', mobile:'86994226580', phone:'', gender:'Masculino', schooling:'Ensino fundamental completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'5662', name:'Abdias Pereira Rocha', birth:'1959-06-21', mobile:'981401633', phone:'', gender:'Masculino', schooling:'Ensino médio completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'5705', name:'Abdon Ferreira dos Santos', birth:'1943-06-21', mobile:'86994614249', phone:'', gender:'Masculino', schooling:'Ensino médio completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'12579', name:'Abdoral Felismino de Sousa', birth:'1954-03-18', mobile:'99984339010', phone:'', gender:'Masculino', schooling:'Ensino fundamental completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'21953', name:'Abel Almeida Guimaraes', birth:'1983-05-20', mobile:'86998445840', phone:'', gender:'Masculino', schooling:'Ensino médio completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'24526', name:'Abel da Silva Marques', birth:'1986-06-14', mobile:'86988050512', phone:'', gender:'Masculino', schooling:'Ensino fundamental completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'26747', name:'Aberlania da Costa Silva', birth:'1984-10-18', mobile:'86999244103', phone:'', gender:'Feminino', schooling:'Ensino fundamental completo', city:'Teresina', state:'PI'}),
+      seedPatient({id: uid(), record:'29262', name:'Abigail Feitosa de Araújo', birth:'2002-11-17', mobile:'8695810385', phone:'', gender:'Feminino', schooling:'Ensino médio completo', city:'Teresina', state:'PI'})
     ],
     appointments: [],
     consultations: []
@@ -67,7 +68,7 @@ function seedPatient(data) {
     photo:'',
     reminder:'não definido',
     bloodType:'', address:'', number:'', district:'', cep:'', city:'', state:'', commercialPhone:'', extension:'', birthPlace:'',
-    profession:'', spouse:'', father:'', mother:'', cpf:'', rg:'', email:'', observations:'', insuranceNumber:'', insuranceValidity:'', insuranceAccommodation:'', insuranceNotes:'',
+    schooling:'', profession:'', spouse:'', father:'', mother:'', cpf:'', rg:'', email:'', observations:'', insurance:'', insuranceNumber:'', insuranceValidity:'', insuranceAccommodation:'', insuranceNotes:'',
     notifications:true, inactive:false, blocked:false, dead:false, ...data
   };
 }
@@ -76,9 +77,9 @@ function seedDataPopulateAppointments() {
   if (state.appointments.length) return;
   const p1 = state.patients[0], p2 = state.patients[1], p3 = state.patients[2];
   state.appointments = [
-    {id:uid(), date:'2026-06-18', time:'12:00', patientId:p1.id, patient:p1.name, insurance:p1.insurance, procedure:'CONSULTA PSIC...', type:'Consulta', status:'Atendido', statusTime:'17:05', notes:''},
-    {id:uid(), date:'2026-06-18', time:'12:30', patientId:p2.id, patient:p2.name, insurance:p2.insurance, procedure:'CONSULTA PSIC...', type:'Consulta', status:'Atendido', statusTime:'15:28', notes:''},
-    {id:uid(), date:'2026-06-18', time:'13:30', patientId:p3.id, patient:p3.name, insurance:p3.insurance, procedure:'RETORNO', type:'Consulta', status:'Confirmado', statusTime:'', notes:''}
+    {id:uid(), date:'2026-06-21', time:'12:00', patientId:p1.id, patient:p1.name, procedure:'CONSULTA', type:'Sessão', status:'Atendido', statusTime:'17:05', notes:''},
+    {id:uid(), date:'2026-06-21', time:'12:30', patientId:p2.id, patient:p2.name, procedure:'CONSULTA', type:'Avaliação neuropsicológica', status:'Atendido', statusTime:'15:28', notes:''},
+    {id:uid(), date:'2026-06-21', time:'13:30', patientId:p3.id, patient:p3.name, procedure:'RETORNO', type:'Sessão', status:'Confirmado', statusTime:'', notes:''}
   ];
   state.consultations = [
     {id:uid(), patientId:p1.id, date:'2026-06-15', duration:'00:24:18', avaliacao:'Paciente em acompanhamento. Boa resposta ao tratamento.', impressao:'Quadro estável.', conduta:'Manter conduta e retorno em 30 dias.', diagnostico:'Transtorno de ansiedade generalizada', hipotese:'TAG', status:'finalizado', files:[]},
@@ -118,6 +119,24 @@ function getBirthdaysForDate(dateIso) {
 }
 function formatStatusText(ap) {
   return ap.status ? `${ap.status}${ap.statusTime ? ' ' + ap.statusTime : ''}` : '';
+}
+
+const statusClassMap = {
+  'Confirmado': 'confirmado',
+  'Faltou': 'faltou',
+  'Em espera': 'em-espera',
+  'Em consulta': 'em-consulta',
+  'Dilatação': 'dilatacao',
+  'Atendido': 'atendido',
+  'Desmarcado': 'desmarcado',
+  'Não atendeu': 'nao-atendeu',
+  'Desligado': 'desligado',
+  'Não estava': 'nao-estava',
+  'WhatsApp': 'whatsapp'
+};
+
+function statusClass(status) {
+  return statusClassMap[status] || 'sem-status';
 }
 
 function setView(viewId, options={}) {
@@ -167,25 +186,50 @@ function renderAgenda() {
   document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.mode === state.viewMode));
   els.noteDateLabel.textContent = formatDateBR(state.selectedDate);
   els.dayNoteText.value = state.dayNotes[state.selectedDate] || '';
-  const birthdays = getBirthdaysForDate(state.selectedDate).map(p => p.name.split(' ')[0]);
-  els.birthdayList.textContent = birthdays.length ? birthdays.join(', ') : '—';
+  renderBirthdays();
   renderSchedule();
+}
+
+function renderBirthdays() {
+  const title = document.querySelector('.birthday-card strong');
+  if (title) title.textContent = `Aniversariantes ${formatDateBR(state.selectedDate).slice(0,5)} 🎂`;
+  const birthdays = getBirthdaysForDate(state.selectedDate);
+  if (!birthdays.length) {
+    els.birthdayList.innerHTML = '<span class="birthday-empty">Nenhum aniversariante.</span>';
+    return;
+  }
+  els.birthdayList.innerHTML = birthdays.map(p => {
+    const phone = normalizePhone(p.mobile || p.phone);
+    const wa = phone ? `<span class="wa-badge" title="WhatsApp">☎</span>` : '';
+    return `<span class="birthday-person">${escapeHtml(p.name)} ${wa}</span>`;
+  }).join('');
 }
 
 function getScheduleSlots() {
   const slots = [];
-  for (let h=12; h<=18; h++) {
-    slots.push(`${String(h).padStart(2,'0')}:00`);
-    if (h < 18) slots.push(`${String(h).padStart(2,'0')}:30`);
+  for (let h = 8; h <= 17; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      // intervalo de almoço igual ao modelo de referência
+      if (h === 12 || (h === 13 && m < 30)) continue;
+      slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+    }
   }
   return slots;
+}
+
+function renderAppointmentTypeOptions() {
+  const select = document.getElementById('appointmentType');
+  if (!select) return;
+  select.innerHTML = appointmentTypes
+    .map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`)
+    .join('');
 }
 
 function getAppointmentsForSelectedDate() {
   let list = state.appointments.filter(a => a.date === state.selectedDate);
   const q = els.appointmentSearch.value.trim().toLowerCase();
   if (q) {
-    list = list.filter(a => [a.patient,a.procedure,a.type,a.insurance,formatStatusText(a)].join(' ').toLowerCase().includes(q));
+    list = list.filter(a => [a.patient,a.procedure,a.type,formatStatusText(a)].join(' ').toLowerCase().includes(q));
   }
   list.sort((a,b) => a.time.localeCompare(b.time));
   return list;
@@ -199,23 +243,23 @@ function renderSchedule() {
   getScheduleSlots().forEach(time => {
     const ap = map[time];
     const div = document.createElement('div');
-    div.className = 'schedule-row schedule-grid' + (ap ? '' : ' empty');
+    const rowStatusClass = ap ? statusClass(ap.status) : '';
+    div.className = 'schedule-row schedule-grid' + (ap ? ` status-${rowStatusClass}` : ' empty') + (time === '13:30' ? ' break-before' : '');
     if (ap) {
       div.innerHTML = `
         <span>${time}</span>
-        <span>${escapeHtml(ap.patient)}</span>
-        <span>${escapeHtml(ap.insurance || '')}</span>
+        <span class="patient-status-name">${escapeHtml(ap.patient)}</span>
         <span>${escapeHtml(ap.procedure || '')}</span>
         <span>${escapeHtml(ap.type || '')}</span>
-        <span><button class="status-btn" data-id="${ap.id}">${statusIcon(ap.status)} ${escapeHtml(formatStatusText(ap) || 'Sem status')}</button></span>
+        <span><button class="status-btn status-${rowStatusClass}" data-id="${ap.id}"><span class="status-icon">${statusIcon(ap.status)}</span><span class="status-label"> ${escapeHtml(formatStatusText(ap) || 'Sem status')}</span></button></span>
         <span class="row-actions">
           <button class="action-btn" data-action="open-record" data-patient-id="${ap.patientId || ''}">☰</button>
           <button class="action-btn" data-action="edit-appt" data-id="${ap.id}">✎</button>
         </span>`;
     } else {
       div.innerHTML = `
-        <span>${time}</span><span></span><span></span><span></span><span></span>
-        <span><button class="status-btn" data-time="${time}">⊘</button></span>
+        <span>${time}</span><span></span><span></span><span></span>
+        <span><button class="status-btn" data-time="${time}"><span class="status-icon">⊘</span><span class="status-label"></span></button></span>
         <span class="row-actions"><button class="action-btn" data-action="quick-add" data-time="${time}">＋</button></span>`;
     }
     rows.appendChild(div);
@@ -244,16 +288,17 @@ function renderPatients(filter='') {
   const q = filter.trim().toLowerCase();
   const body = els.patientsBody; body.innerHTML='';
   state.patients
-    .filter(p => [p.record,p.name,p.mobile,p.phone].join(' ').toLowerCase().includes(q))
+    .filter(p => [p.name,p.mobile,p.phone,p.email,p.cpf,p.city,p.father,p.mother,p.schooling].join(' ').toLowerCase().includes(q))
     .sort((a,b) => a.name.localeCompare(b.name))
     .forEach(p => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${escapeHtml(p.record || '')}</td>
         <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(patientAge(p.birth) || '—')}</td>
         <td>${escapeHtml(formatDateBR(p.birth))}</td>
-        <td>${escapeHtml(maskPhone(p.mobile))}</td>
-        <td>${escapeHtml(maskPhone(p.phone))}</td>
+        <td>${escapeHtml(maskPhone(p.mobile || p.phone))}</td>
+        <td>${escapeHtml(p.email || '—')}</td>
+        <td>${escapeHtml(p.city || '—')}</td>
         <td class="table-actions">
           <button title="Abrir prontuário" data-action="open" data-id="${p.id}">☰</button>
           <button title="Editar" data-action="edit" data-id="${p.id}">✎</button>
@@ -304,17 +349,18 @@ function renderRecordView() {
     </div>
     <div>
       <div class="patient-name-line">${escapeHtml(patient.record || '')} - ${escapeHtml(patient.name)}</div>
-      <div class="patient-subtitle">(${patientAge(patient.birth)}) ${escapeHtml(patient.gender || 'Não informado')}</div>
+      <div class="patient-subtitle">${escapeHtml(patientAge(patient.birth) || 'Idade não informada')}</div>
       <div class="reminder-pill">Lembrete para consulta ${escapeHtml(patient.reminder || 'não definido')} <button id="editReminderBtn">✎</button></div>
       <div class="summary-grid">
-        <div class="summary-item"><span>Sexo</span><strong>${escapeHtml(patient.gender || '—')}</strong></div>
+        <div class="summary-item"><span>Idade</span><strong>${escapeHtml(patientAge(patient.birth) || '—')}</strong></div>
         <div class="summary-item"><span>Data nasc.</span><strong>${escapeHtml(formatDateBR(patient.birth) || '—')}</strong></div>
-        <div class="summary-item"><span>Convênio</span><strong>${escapeHtml(patient.insurance || '—')}</strong></div>
-        <div class="summary-item"><span>Celular</span><strong>${escapeHtml(maskPhone(patient.mobile) || '—')}</strong></div>
+        <div class="summary-item"><span>Telefone</span><strong>${escapeHtml(maskPhone(patient.mobile || patient.phone) || '—')}</strong></div>
         <div class="summary-item"><span>Email</span><strong>${escapeHtml(patient.email || '—')}</strong></div>
+        <div class="summary-item"><span>CPF</span><strong>${escapeHtml(patient.cpf || '—')}</strong></div>
+        <div class="summary-item"><span>Escolaridade</span><strong>${escapeHtml(patient.schooling || '—')}</strong></div>
         <div class="summary-item"><span>Cidade</span><strong>${escapeHtml(patient.city || '—')}</strong></div>
-        <div class="summary-item"><span>Observações</span><strong>${escapeHtml(patient.observations || '—')}</strong></div>
-        <div class="summary-item"><span>Status</span><strong>${patient.inactive ? 'Inativo' : 'Ativo'}</strong></div>
+        <div class="summary-item"><span>Mãe</span><strong>${escapeHtml(patient.mother || '—')}</strong></div>
+        <div class="summary-item"><span>Pai</span><strong>${escapeHtml(patient.father || '—')}</strong></div>
       </div>
       <div class="record-badges">
         ${patient.blocked ? '<span class="badge">Bloqueado</span>' : ''}
@@ -402,21 +448,28 @@ function renderPatientEditForm(patientId=null) {
   editingPatientId = patientId || null;
   const form = document.getElementById('patientEditForm');
   form.reset();
-  setField('name', patient.name); setField('record', patient.record); setField('birthIso', patient.birth); setField('gender', patient.gender);
-  setField('bloodType', patient.bloodType); setField('cep', patient.cep); setField('address', patient.address); setField('number', patient.number);
-  setField('district', patient.district); setField('phone', patient.phone); setField('mobile', patient.mobile); setField('commercialPhone', patient.commercialPhone);
-  setField('extension', patient.extension); setField('birthPlace', patient.birthPlace); setField('city', patient.city); setField('state', patient.state);
-  setField('profession', patient.profession); setField('spouse', patient.spouse); setField('father', patient.father); setField('mother', patient.mother);
-  setField('insurance', patient.insurance); setField('insuranceNumber', patient.insuranceNumber); setField('insuranceValidity', patient.insuranceValidity); setField('insuranceAccommodation', patient.insuranceAccommodation);
-  setField('cpf', patient.cpf); setField('rg', patient.rg); setField('email', patient.email); setField('insuranceNotes', patient.insuranceNotes); setField('observations', patient.observations);
-  form.querySelector('[name="notifications"]').checked = !!patient.notifications;
-  form.querySelector('[name="inactive"]').checked = !!patient.inactive;
-  form.querySelector('[name="blocked"]').checked = !!patient.blocked;
-  form.querySelector('[name="dead"]').checked = !!patient.dead;
+  setField('name', patient.name);
+  setField('birthIso', patient.birth);
+  setField('mobile', patient.mobile || patient.phone);
+  setField('email', patient.email);
+  setField('cpf', patient.cpf);
+  setField('schooling', patient.schooling);
+  setField('city', patient.city);
+  setField('father', patient.father);
+  setField('mother', patient.mother);
   renderAvatarPreview(patient.photo);
+  updateAgePreview();
+  const birthInput = document.getElementById('editBirth');
+  if (birthInput) birthInput.oninput = updateAgePreview;
 
   document.getElementById('savePatientPageBtn').onclick = savePatientFromPage;
   document.getElementById('printPatientBtn').onclick = () => printPatient(patient.id || editingPatientId);
+}
+
+function updateAgePreview() {
+  const birth = document.getElementById('editBirth')?.value || '';
+  const ageField = document.getElementById('editAge');
+  if (ageField) ageField.value = patientAge(birth) || '';
 }
 
 function setField(name, value) {
@@ -432,36 +485,23 @@ function renderAvatarPreview(photo) {
 function savePatientFromPage() {
   const form = document.getElementById('patientEditForm');
   const fd = new FormData(form);
+  const existing = findPatient(editingPatientId) || {};
   const patientData = seedPatient({
+    ...existing,
     id: editingPatientId || uid(),
     name: fd.get('name') || '',
-    record: fd.get('record') || String(Math.floor(10000 + Math.random()*89999)),
+    record: existing.record || String(Math.floor(10000 + Math.random()*89999)),
     birth: fd.get('birthIso') || '',
-    gender: fd.get('gender') || '',
-    bloodType: fd.get('bloodType') || '',
-    cep: fd.get('cep') || '',
-    address: fd.get('address') || '',
-    number: fd.get('number') || '',
-    district: fd.get('district') || '',
-    phone: fd.get('phone') || '',
     mobile: fd.get('mobile') || '',
-    commercialPhone: fd.get('commercialPhone') || '',
-    extension: fd.get('extension') || '',
-    birthPlace: fd.get('birthPlace') || '',
+    phone: fd.get('mobile') || '',
+    email: fd.get('email') || '',
+    cpf: fd.get('cpf') || '',
+    schooling: fd.get('schooling') || '',
     city: fd.get('city') || '',
-    state: fd.get('state') || '',
-    profession: fd.get('profession') || '',
-    spouse: fd.get('spouse') || '',
     father: fd.get('father') || '',
     mother: fd.get('mother') || '',
-    insurance: fd.get('insurance') || '',
-    insuranceNumber: fd.get('insuranceNumber') || '',
-    insuranceValidity: fd.get('insuranceValidity') || '',
-    insuranceAccommodation: fd.get('insuranceAccommodation') || '',
-    cpf: fd.get('cpf') || '', rg: fd.get('rg') || '', email: fd.get('email') || '',
-    insuranceNotes: fd.get('insuranceNotes') || '', observations: fd.get('observations') || '',
-    notifications: !!fd.get('notifications'), inactive: !!fd.get('inactive'), blocked: !!fd.get('blocked'), dead: !!fd.get('dead'),
-    photo: els.patientAvatarPreview.dataset.photo || '', reminder: findPatient(editingPatientId)?.reminder || 'não definido'
+    photo: els.patientAvatarPreview.dataset.photo || '',
+    reminder: existing.reminder || 'não definido'
   });
   if (!patientData.name.trim()) { alert('Informe o nome do paciente.'); return; }
 
@@ -486,11 +526,15 @@ function printPatient(id) {
       <h1>Ficha do paciente</h1>
       <table>
         <tr><td><strong>Nome</strong></td><td>${escapeHtml(patient.name)}</td></tr>
-        <tr><td><strong>Prontuário</strong></td><td>${escapeHtml(patient.record || '')}</td></tr>
-        <tr><td><strong>Nascimento</strong></td><td>${escapeHtml(formatDateBR(patient.birth))}</td></tr>
-        <tr><td><strong>Celular</strong></td><td>${escapeHtml(maskPhone(patient.mobile))}</td></tr>
-        <tr><td><strong>Convênio</strong></td><td>${escapeHtml(patient.insurance || '')}</td></tr>
-        <tr><td><strong>Observações</strong></td><td>${escapeHtml(patient.observations || '')}</td></tr>
+        <tr><td><strong>Data de nascimento</strong></td><td>${escapeHtml(formatDateBR(patient.birth))}</td></tr>
+        <tr><td><strong>Idade</strong></td><td>${escapeHtml(patientAge(patient.birth) || '')}</td></tr>
+        <tr><td><strong>Telefone</strong></td><td>${escapeHtml(maskPhone(patient.mobile || patient.phone))}</td></tr>
+        <tr><td><strong>E-mail</strong></td><td>${escapeHtml(patient.email || '')}</td></tr>
+        <tr><td><strong>CPF</strong></td><td>${escapeHtml(patient.cpf || '')}</td></tr>
+        <tr><td><strong>Escolaridade</strong></td><td>${escapeHtml(patient.schooling || '')}</td></tr>
+        <tr><td><strong>Cidade</strong></td><td>${escapeHtml(patient.city || '')}</td></tr>
+        <tr><td><strong>Mãe</strong></td><td>${escapeHtml(patient.mother || '')}</td></tr>
+        <tr><td><strong>Pai</strong></td><td>${escapeHtml(patient.father || '')}</td></tr>
       </table>
       <script>window.print();</script>
     </body></html>`;
@@ -505,6 +549,7 @@ function openAppointmentModal({time=null, date=null, appointmentId=null}={}) {
   form.dataset.editId = appointmentId || '';
   const targetDate = date || state.selectedDate;
   els.appointmentDate.value = targetDate;
+  form.querySelector('[name="type"]').value = appointmentTypes[0];
   if (time) form.querySelector('[name="time"]').value = time;
   if (appointmentId) {
     const ap = state.appointments.find(a => a.id === appointmentId);
@@ -512,9 +557,8 @@ function openAppointmentModal({time=null, date=null, appointmentId=null}={}) {
       form.querySelector('[name="patient"]').value = ap.patient;
       form.querySelector('[name="date"]').value = ap.date;
       form.querySelector('[name="time"]').value = ap.time;
-      form.querySelector('[name="insurance"]').value = ap.insurance || '';
       form.querySelector('[name="procedure"]').value = ap.procedure || '';
-      form.querySelector('[name="type"]').value = ap.type || 'Consulta';
+      form.querySelector('[name="type"]').value = ap.type || appointmentTypes[0];
       form.querySelector('[name="notes"]').value = ap.notes || '';
     }
   }
@@ -526,7 +570,7 @@ function openStatusMenu(e, appointmentId, emptyTime) {
   menu.innerHTML = '';
   statuses.forEach(([icon,label]) => {
     const b = document.createElement('button');
-    b.className = 'status-option';
+    b.className = 'status-option status-option-' + statusClass(label);
     b.innerHTML = `<span>${icon}</span>${label}`;
     b.onclick = () => {
       if (appointmentId) {
@@ -544,9 +588,21 @@ function openStatusMenu(e, appointmentId, emptyTime) {
     };
     menu.appendChild(b);
   });
-  menu.style.left = Math.min(e.clientX, window.innerWidth - 230) + 'px';
-  menu.style.top = Math.min(e.clientY, window.innerHeight - 430) + 'px';
   menu.classList.add('show');
+
+  // Mantém a lista de status sempre dentro da tela, sem cortar no canto direito.
+  const target = e.currentTarget || e.target;
+  const rect = target.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  const margin = 8;
+  let left = rect.left - menuRect.width - margin;
+  if (left < margin) left = rect.right + margin;
+  if (left + menuRect.width > window.innerWidth - margin) left = window.innerWidth - menuRect.width - margin;
+  let top = rect.top;
+  if (top + menuRect.height > window.innerHeight - margin) top = window.innerHeight - menuRect.height - margin;
+  if (top < margin) top = margin;
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
 }
 
 function currentClock() {
@@ -562,7 +618,7 @@ function saveAppointment(e) {
   if (!patientName) return;
   let patient = state.patients.find(p => p.name.toLowerCase() === patientName.toLowerCase());
   if (!patient) {
-    patient = seedPatient({id:uid(), record:String(Math.floor(10000+Math.random()*89999)), name: patientName, birth:'', mobile:'', phone:'', gender:'Não informado', insurance: fd.get('insurance') || 'PARTICULAR'});
+    patient = seedPatient({id:uid(), record:String(Math.floor(10000+Math.random()*89999)), name: patientName, birth:'', mobile:'', phone:''});
     state.patients.unshift(patient);
   }
   const payload = {
@@ -571,9 +627,8 @@ function saveAppointment(e) {
     time: fd.get('time'),
     patientId: patient.id,
     patient: patient.name,
-    insurance: fd.get('insurance') || patient.insurance || '',
     procedure: fd.get('procedure') || '',
-    type: fd.get('type') || '',
+    type: fd.get('type') || appointmentTypes[0],
     status: 'Confirmado',
     statusTime: currentClock(),
     notes: fd.get('notes') || ''
@@ -643,9 +698,83 @@ function escapeHtml(str='') {
     .replaceAll("'",'&#39;');
 }
 
+
+function toggleMobileMenu(force) {
+  const open = typeof force === 'boolean' ? force : !document.body.classList.contains('mobile-menu-open');
+  document.body.classList.toggle('mobile-menu-open', open);
+}
+
+function closeMobileMenu() {
+  toggleMobileMenu(false);
+}
+
+function toggleSettingsPanel(force) {
+  const panel = document.getElementById('settingsPanel');
+  if (!panel) return;
+  const open = typeof force === 'boolean' ? force : !panel.classList.contains('show');
+  panel.classList.toggle('show', open);
+  panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
+function downloadLocalData() {
+  const payload = {
+    app: 'Maurício.Sis',
+    storageKey: STORAGE_KEY,
+    exportedAt: new Date().toISOString(),
+    state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  const today = new Date().toISOString().slice(0,10);
+  a.href = URL.createObjectURL(blob);
+  a.download = `mauricio-sis-dados-${today}.json`;
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(a.href);
+  a.remove();
+}
+
+function importLocalData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const importedState = data.state || data;
+      if (!importedState || !Array.isArray(importedState.patients) || !Array.isArray(importedState.appointments)) {
+        alert('Arquivo inválido. Envie um backup JSON gerado pelo sistema.');
+        return;
+      }
+      if (!confirm('Enviar estes dados vai substituir os dados salvos neste navegador. Deseja continuar?')) return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(importedState));
+      alert('Dados enviados com sucesso. O sistema será recarregado.');
+      location.reload();
+    } catch (err) {
+      alert('Não foi possível ler o arquivo. Verifique se ele é um JSON válido.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearLocalData() {
+  if (!confirm('Tem certeza que deseja apagar todos os dados salvos neste navegador?')) return;
+  if (!confirm('Essa ação não pode ser desfeita sem um backup. Confirmar exclusão?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  alert('Dados apagados. O sistema será recarregado com os dados iniciais.');
+  location.reload();
+}
+
 // Global interactions
 
-document.querySelectorAll('.nav-item').forEach(btn => btn.onclick = () => setView(btn.dataset.view));
+document.querySelectorAll('.nav-item').forEach(btn => btn.onclick = () => { setView(btn.dataset.view); closeMobileMenu(); });
+document.getElementById('menuToggle')?.addEventListener('click', () => toggleMobileMenu());
+document.getElementById('sidebarBackdrop')?.addEventListener('click', closeMobileMenu);
+document.getElementById('settingsBtn')?.addEventListener('click', e => { e.stopPropagation(); toggleSettingsPanel(); });
+document.getElementById('closeSettingsBtn')?.addEventListener('click', () => toggleSettingsPanel(false));
+document.getElementById('downloadDataBtn')?.addEventListener('click', downloadLocalData);
+document.getElementById('importDataBtn')?.addEventListener('click', () => document.getElementById('importDataInput').click());
+document.getElementById('importDataInput')?.addEventListener('change', e => { importLocalData(e.target.files[0]); e.target.value = ''; });
+document.getElementById('clearDataBtn')?.addEventListener('click', clearLocalData);
 document.getElementById('fitPatientBtn').onclick = () => openAppointmentModal({date: state.selectedDate});
 document.querySelectorAll('.close-modal').forEach(btn => btn.onclick = () => document.getElementById('appointmentModal').classList.remove('show'));
 document.getElementById('appointmentForm').onsubmit = saveAppointment;
@@ -658,7 +787,7 @@ document.getElementById('consultationForm').onsubmit = e => { e.preventDefault()
 document.getElementById('summarizeBtn').onclick = summarizeHistory;
 document.getElementById('summarizeHistoryBtn').onclick = summarizeHistory;
 document.getElementById('saveNoteBtn').onclick = () => { state.dayNotes[state.selectedDate] = els.dayNoteText.value; saveState(); alert('Lembrete salvo.'); };
-document.getElementById('goTodayBtn').onclick = () => { state.selectedDate = '2026-06-18'; state.calendarDate = '2026-06-18'; saveState(); renderAgenda(); };
+document.getElementById('goTodayBtn').onclick = () => { state.selectedDate = '2026-06-21'; state.calendarDate = '2026-06-21'; saveState(); renderAgenda(); };
 document.getElementById('prevMonthBtn').onclick = () => shiftMonth(-1);
 document.getElementById('nextMonthBtn').onclick = () => shiftMonth(1);
 document.querySelectorAll('.mode-btn').forEach(btn => btn.onclick = () => { state.viewMode = btn.dataset.mode; saveState(); renderAgenda(); });
@@ -674,6 +803,7 @@ document.getElementById('consultFileInput').addEventListener('change', e => {
 });
 document.addEventListener('click', e => {
   if (!e.target.closest('.status-btn') && !e.target.closest('#statusMenu')) document.getElementById('statusMenu').classList.remove('show');
+  if (!e.target.closest('#settingsPanel') && !e.target.closest('#settingsBtn')) toggleSettingsPanel(false);
 });
 
 function shiftMonth(direction) {
@@ -716,6 +846,7 @@ function handlePhotoChange(e) {
 }
 
 // init
+renderAppointmentTypeOptions();
 renderPatients();
 renderAgenda();
 setView('agenda');

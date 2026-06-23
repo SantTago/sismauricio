@@ -17,13 +17,14 @@ button{cursor:pointer}
 textarea{resize:vertical}
 .app-shell{display:flex;min-height:100vh}
 .sidebar{width:238px;background:linear-gradient(180deg,#0b2148,#071733);color:#fff;position:fixed;inset:0 auto 0 0;z-index:10}
-.brand{height:78px;display:flex;align-items:center;gap:10px;padding:0 28px;font-size:24px;border-bottom:1px solid rgba(255,255,255,.08)}
-.cloud{font-size:34px}
+.brand{height:78px;display:flex;align-items:center;gap:8px;padding:0 22px;font-size:19px;border-bottom:1px solid rgba(255,255,255,.08)}
+.cloud{font-size:27px}
 .sidebar nav{padding-top:8px}
 .nav-item{width:100%;height:58px;border:0;background:transparent;color:white;text-align:left;padding:0 24px;font-size:18px;display:flex;align-items:center;gap:14px}
 .nav-item.active{background:linear-gradient(90deg,#0b4ed8,#0074ff)}
 .main{margin-left:238px;width:calc(100% - 238px)}
 .topbar{height:78px;background:linear-gradient(90deg,#133467,#081a3a);display:flex;align-items:center;gap:18px;color:white;padding:0 24px;position:sticky;top:0;z-index:9}
+.mobile-logo{display:none}
 .menu-btn{background:none;border:0;color:white;font-size:22px}
 .global-search{background:#31517e;border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:8px 10px;display:flex;gap:8px;min-width:150px}
 .global-search input{background:transparent;border:0;outline:0;color:white;width:160px}
@@ -31,6 +32,17 @@ textarea{resize:vertical}
 .clinic-select{margin-left:auto;width:220px;padding:10px;border-radius:3px;border:1px solid #cad2de;background:white}
 .avatar{width:38px;height:38px;background:#e9edf3;color:#536174;border-radius:50%;display:grid;place-items:center}
 .top-link,.top-sep{opacity:.95}
+.settings-btn{background:none;border:0;color:white;font-size:22px;line-height:1;padding:6px;border-radius:6px}
+.settings-btn:hover{background:rgba(255,255,255,.12)}
+.sidebar-backdrop{display:none}
+.settings-panel{position:fixed;right:22px;top:70px;width:290px;background:#fff;border:1px solid #d7dfe9;border-radius:8px;box-shadow:0 16px 45px rgba(0,0,0,.22);padding:14px;z-index:120;display:none;color:#26364a}
+.settings-panel.show{display:block}
+.settings-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #edf1f5;padding-bottom:10px;margin-bottom:10px}
+.settings-panel-head button{border:0;background:transparent;font-size:24px;color:#59677a}
+.settings-panel p{font-size:13px;color:#6b7789;line-height:1.4;margin:0 0 12px}
+.settings-panel > button{width:100%;border:1px solid #d7dfe9;background:#fff;color:#26364a;padding:12px;margin-top:8px;border-radius:5px;text-align:left;font-weight:600}
+.settings-panel > button:hover{background:#f5f8fc}
+.settings-panel .danger-option{color:#d02855;border-color:#f1c7d2}
 .view{display:none;padding:20px}
 .active-view{display:block}
 .content-toolbar,.patients-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
@@ -61,13 +73,41 @@ textarea{resize:vertical}
 .mini-link{border:0;background:none;color:#4c5970;padding:0}
 .note-card textarea{width:100%;border:1px dashed #ceb871;background:#fffef6;padding:8px;min-height:74px}
 .save-note{width:100%;margin:12px 0;padding:10px;border:0;background:#f4f5f7;color:#52606f}
-.birthday-card{background:#d31d69;color:white;padding:10px;display:flex;justify-content:space-between;gap:8px}
+.birthday-card{background:white;border:1px solid #e3e7ee;color:var(--text);display:block;overflow:hidden}
+.birthday-card strong{display:block;background:#e31465;color:#fff;padding:10px 12px;font-size:16px}
+.birthday-card #birthdayList{display:block;padding:10px 12px;line-height:1.55}
+.birthday-person{display:block;color:#25364b;font-weight:500}
+.wa-badge{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#18c85a;color:#fff;font-size:11px;font-weight:700;margin-left:5px;vertical-align:middle}
 .schedule-panel{overflow:auto}
-.schedule-grid{display:grid;grid-template-columns:74px 1.3fr .95fr 1fr .7fr 1fr 62px;align-items:center;min-width:880px}
+.schedule-grid{display:grid;grid-template-columns:74px 1.45fr 1.15fr .95fr .95fr 62px;align-items:center;min-width:780px}
 .schedule-head{font-weight:600;border-bottom:1px solid #d47878}
 .schedule-head span,.schedule-row>span,.schedule-row>.row-actions{padding:13px 10px;border-right:1px solid #eef1f4}
 .schedule-row{border-bottom:1px solid #e7ebf0}
+.schedule-row.break-before{border-top:3px solid #e66b93}
 .schedule-row.empty{color:#9ba4b0}
+.patient-status-name{font-weight:700}
+.schedule-row.status-confirmado .patient-status-name{color:#1f78d1}
+.schedule-row.status-faltou .patient-status-name{color:#d35400}
+.schedule-row.status-em-espera .patient-status-name{color:#8a6d00}
+.schedule-row.status-em-consulta .patient-status-name{color:#6f42c1}
+.schedule-row.status-dilatacao .patient-status-name{color:#0f8b8d}
+.schedule-row.status-atendido .patient-status-name{color:#18864b}
+.schedule-row.status-desmarcado .patient-status-name{color:#d7265c}
+.schedule-row.status-nao-atendeu .patient-status-name{color:#a35d00}
+.schedule-row.status-desligado .patient-status-name{color:#5f6b7a}
+.schedule-row.status-nao-estava .patient-status-name{color:#7b4f36}
+.schedule-row.status-whatsapp .patient-status-name{color:#0aa84f}
+.status-btn.status-confirmado{color:#1f78d1}
+.status-btn.status-faltou{color:#d35400}
+.status-btn.status-em-espera{color:#8a6d00}
+.status-btn.status-em-consulta{color:#6f42c1}
+.status-btn.status-dilatacao{color:#0f8b8d}
+.status-btn.status-atendido{color:#18864b}
+.status-btn.status-desmarcado{color:#d7265c}
+.status-btn.status-nao-atendeu{color:#a35d00}
+.status-btn.status-desligado{color:#5f6b7a}
+.status-btn.status-nao-estava{color:#7b4f36}
+.status-btn.status-whatsapp{color:#0aa84f}
 .status-btn{border:0;background:none;text-align:left;color:#42546a;padding:0;display:flex;align-items:center;gap:6px;min-height:22px}
 .row-actions{display:flex;gap:4px;justify-content:center}
 .action-btn{border:1px solid #dce2e9;background:#fff;padding:4px 7px}
@@ -157,4 +197,193 @@ table{width:100%;border-collapse:collapse}th,td{padding:16px 14px;border-bottom:
 }
 @media(max-width:650px){
   .main{margin-left:0;width:100%}.sidebar{display:none}.topbar{padding:0 12px}.top-link,.top-sep{display:none}.view{padding:10px}.form-grid,.field-grid.two-up,.field-grid.three-up,.field-grid.four-up{grid-template-columns:1fr}.full,.span-2{grid-column:1}.patients-toolbar{align-items:flex-start;gap:12px;flex-wrap:wrap}.patient-search input{width:150px}.record-summary{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr}.toolbar-search-input{min-width:0;width:180px}
+}
+
+.form-title{font-size:20px;font-weight:700;color:#26364a}
+.patient-essential-grid{padding:16px 0}
+.compact-patient-grid{align-items:start}
+#editAge{background:#f5f7fa;color:#5d6a7a}
+
+
+/* Responsividade mobile estilo OnMed */
+@media(max-width:900px){
+  .agenda-layout{grid-template-columns:1fr}
+}
+
+@media(max-width:650px){
+  body{background:#f8f9fb;font-size:16px}
+  .main{margin-left:0;width:100%}
+  .sidebar{display:none}
+  .topbar{
+    height:auto;
+    min-height:148px;
+    padding:18px 18px 16px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:14px 18px;
+    background:linear-gradient(180deg,#122f58,#0b1f3b);
+    position:sticky;
+    top:0;
+    z-index:30;
+  }
+  .mobile-logo{
+    display:flex;
+    width:100%;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    color:white;
+    font-size:21px;
+    letter-spacing:-.02em;
+    order:1;
+  }
+  .mobile-logo-cloud{font-size:27px;line-height:1}
+  .menu-btn{position:absolute;right:18px;top:26px;font-size:26px;order:2}
+  .clinic-select{display:block;margin-left:0;width:150px;order:3;padding:10px 12px;font-weight:600;color:#465368}
+  .top-link{display:inline;order:4;font-size:21px}
+  .top-sep,.avatar,.topbar > span:not(.top-link):not(.top-sep){display:none}
+  .view{padding:0 18px 22px}
+  .content-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:14px;margin:28px 0 18px}
+  .secondary-btn{width:100%;min-height:62px;font-size:18px;font-weight:700;border:1px solid #d8dde6;background:#fff;color:#21364f;box-shadow:none}
+  .search-wrap{width:100%;display:flex;background:#fff;border:1px solid #d8dde6;border-radius:4px;overflow:hidden}
+  .toolbar-search-input{width:100%;min-width:0;border:0;text-align:center;font-size:18px;font-weight:700;color:#27384d;padding:18px 10px}
+  .toolbar-search-input::placeholder{color:#27384d;opacity:.9}
+  .search-appointment{border:0;border-left:0;background:#fff;font-size:19px;padding:0 18px}
+  .agenda-layout{display:block}
+  .agenda-side{display:block!important;background:#fff;border:1px solid #d8dde6;padding:10px;margin-bottom:16px}
+  .today-btn,.mode-toggle{display:none}
+  .calendar-card{border:1px solid #d8dde6;background:#fff}
+  .calendar-head{padding:16px 24px;font-size:22px}
+  .calendar-head button{font-size:24px;font-weight:700;color:#222}
+  .weekdays span{font-size:18px;padding:12px 0;color:#222}
+  .days{border-top:0}
+  .days button{font-size:18px;min-height:44px;padding:0;border-radius:0}
+  .days button:nth-child(7n+1),.days button:nth-child(7n){background:#d7edf8}
+  .days button.active{background:#2678b6!important;color:white;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+  .days button.muted-day{color:#b4bdc9}
+  .note-card{margin-top:0;border:1px solid #e4e4d1;border-top:0;background:#fff4cb;padding:0}
+  .note-head{margin:0;padding:10px 12px;background:#fff3bd;font-size:18px;color:#5f5835}
+  .note-head .mini-link{font-size:0;position:relative;width:20px;height:20px}
+  .note-head .mini-link::after{content:'−';font-size:24px;color:#6a6035;position:absolute;inset:-6px 0 auto auto}
+  .note-card textarea{border:0;border-top:1px solid #e4e4d1;width:100%;min-height:170px;background:repeating-linear-gradient(#fff 0,#fff 31px,#e4e8ef 32px);font-size:18px;color:#6f7782;padding:14px 14px;resize:none}
+  .save-note{display:block;width:48%;min-width:210px;margin:12px auto 0;padding:12px;border:1px solid #e5e7ed;background:#fff;color:#8b929c;font-size:17px;border-radius:4px}
+  .birthday-card{margin-top:10px;border:1px solid #e3e7ee;background:#fff}
+  .birthday-card strong{font-size:20px;background:#e51465;color:#fff;padding:12px 14px}
+  .birthday-card #birthdayList{font-size:18px;padding:8px 14px 12px;line-height:1.45;max-height:none;color:#202f42}
+  .birthday-person{margin:1px 0;font-weight:500}
+  .wa-badge{width:18px;height:18px;font-size:10px;margin-left:5px}
+  .schedule-panel{border:1px solid #d8dde6;background:#fff;overflow:visible;margin-top:12px}
+  .schedule-grid{display:grid;grid-template-columns:90px 1fr 72px;min-width:0;width:100%;align-items:center}
+  .schedule-head{border-bottom:1px solid #d8dde6;font-size:18px;font-weight:700;color:#2b3a4e}
+  .schedule-head span,.schedule-row>span,.schedule-row>.row-actions{padding:8px 10px;border-right:0;min-height:41px;display:flex;align-items:center}
+  .schedule-row{min-height:42px;border-bottom:1px solid #d8dde6;font-size:17px;color:#37475c}
+  .schedule-row.empty{color:#37475c}
+  .schedule-head span:nth-child(3),.schedule-head span:nth-child(4),.schedule-head span:nth-child(6),
+  .schedule-row>span:nth-child(3),.schedule-row>span:nth-child(4),.schedule-row>span:nth-child(6){display:none!important}
+  .schedule-head .status-head-label{font-size:0}
+  .schedule-head .status-head-label::after{content:'St';font-size:18px}
+  .status-btn{width:44px;height:34px;margin-left:auto;border:1px solid #d8dde6;border-radius:4px;background:#fff;display:grid;place-items:center;text-align:center;color:#34465b;font-size:18px;line-height:1}
+  .status-btn .status-label{display:none}
+  .status-btn .status-icon{font-size:18px;line-height:1}
+  .row-actions{display:none!important}
+  .records-total{font-size:15px;padding:12px;color:#687589}
+  .modal{width:calc(100vw - 22px);max-height:92vh;overflow:auto}
+  .form-grid{grid-template-columns:1fr;padding:18px}
+  .modal-actions{justify-content:stretch}.modal-actions button{flex:1}
+  .patients-toolbar{flex-direction:column;align-items:stretch;margin-top:18px}
+  .patient-search input{width:100%}
+  .patients-table-wrap{overflow:auto}
+  .record-summary{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr}
+  .field-grid.two-up,.field-grid.three-up,.field-grid.four-up{grid-template-columns:1fr}.full,.span-2{grid-column:1}
+}
+
+
+/* Ajustes pedidos: menu mobile, cores por status e painel de dados */
+@media(max-width:650px){
+  .settings-panel{top:118px;right:14px;left:14px;width:auto;z-index:130}
+  .sidebar{
+    display:block!important;
+    width:260px!important;
+    transform:translateX(-105%);
+    transition:transform .24s ease;
+    z-index:110;
+    box-shadow:12px 0 40px rgba(0,0,0,.28);
+  }
+  .sidebar .brand{padding:0 18px}
+  .sidebar .brand strong{display:block;font-size:18px}
+  .sidebar .nav-item{font-size:18px;padding:0 24px;justify-content:flex-start}
+  .sidebar .nav-item span{font-size:22px}
+  body.mobile-menu-open .sidebar{transform:translateX(0)}
+  .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(3,10,24,.5);z-index:100}
+  body.mobile-menu-open .sidebar-backdrop{display:block}
+  .settings-btn{display:block!important;position:absolute;left:18px;top:26px;font-size:25px;order:2}
+  .menu-btn{right:18px;left:auto}
+  .schedule-row.status-confirmado{background:#f4f9ff}
+  .schedule-row.status-faltou{background:#fff7ef}
+  .schedule-row.status-em-espera{background:#fffbea}
+  .schedule-row.status-em-consulta{background:#f8f3ff}
+  .schedule-row.status-dilatacao{background:#effdff}
+  .schedule-row.status-atendido{background:#f1fff6}
+  .schedule-row.status-desmarcado{background:#fff2f6}
+  .schedule-row.status-nao-atendeu{background:#fff8ee}
+  .schedule-row.status-desligado{background:#f5f6f8}
+  .schedule-row.status-nao-estava{background:#fff7f2}
+  .schedule-row.status-whatsapp{background:#f0fff6}
+  .schedule-row .patient-status-name{font-size:17px;line-height:1.15}
+  .status-btn.status-confirmado{border-color:#1f78d1;background:#eef7ff}
+  .status-btn.status-faltou{border-color:#d35400;background:#fff3e6}
+  .status-btn.status-em-espera{border-color:#b79000;background:#fff8dc}
+  .status-btn.status-em-consulta{border-color:#6f42c1;background:#f5eeff}
+  .status-btn.status-dilatacao{border-color:#0f8b8d;background:#eaffff}
+  .status-btn.status-atendido{border-color:#18864b;background:#e8fff0}
+  .status-btn.status-desmarcado{border-color:#d7265c;background:#fff0f5}
+  .status-btn.status-nao-atendeu{border-color:#a35d00;background:#fff4e7}
+  .status-btn.status-desligado{border-color:#5f6b7a;background:#f1f3f5}
+  .status-btn.status-nao-estava{border-color:#7b4f36;background:#fff1ea}
+  .status-btn.status-whatsapp{border-color:#0aa84f;background:#e8fff0}
+}
+
+
+/* Ajuste final: visual mais compacto no computador e status sem corte */
+@media (min-width:651px){
+  body{font-size:14px}
+  .sidebar{width:190px}
+  .main{margin-left:190px;width:calc(100% - 190px)}
+  .brand{height:62px;font-size:18px;padding:0 16px}
+  .cloud{font-size:24px}
+  .topbar{height:62px;padding:0 18px;gap:14px}
+  .menu-btn{font-size:21px}
+  .clinic-select{width:220px;padding:9px 12px}
+  .avatar{width:34px;height:34px}
+  .settings-btn{font-size:20px;padding:5px}
+  .nav-item{height:56px;font-size:16px;padding:0 20px;gap:12px}
+  .view{padding:12px 16px}
+  .content-toolbar,.patients-toolbar{margin-bottom:10px}
+  .secondary-btn,.today-btn,.cancel-btn,.search-appointment{padding:10px 14px}
+  .toolbar-search-input{padding:10px 13px;min-width:230px}
+  .agenda-layout{grid-template-columns:200px minmax(0,1fr);gap:12px}
+  .agenda-side{padding:8px}
+  .calendar-head{padding:9px 10px;font-size:14px}
+  .weekdays span{font-size:11px;padding:5px 0}
+  .days button{font-size:14px;padding:6px 0}
+  .note-card{margin-top:10px;padding:8px}
+  .note-card textarea{min-height:84px;padding:7px;font-size:13px}
+  .save-note{margin:9px 0;padding:9px}
+  .birthday-card strong{padding:8px 10px;font-size:14px}
+  .birthday-card #birthdayList{padding:8px 10px;font-size:13px;line-height:1.45}
+  .wa-badge{width:16px;height:16px;font-size:9px}
+  .schedule-panel{overflow:auto}
+  .schedule-grid{grid-template-columns:64px minmax(180px,1.15fr) minmax(120px,.75fr) minmax(150px,.95fr) minmax(180px,.9fr) 64px;min-width:760px}
+  .schedule-head span,.schedule-row>span,.schedule-row>.row-actions{padding:8px 9px}
+  .schedule-row{min-height:44px;font-size:14px}
+  .schedule-row .patient-status-name{line-height:1.2}
+  .status-btn{font-size:13px;line-height:1.2;white-space:nowrap;max-width:100%;overflow:visible}
+  .status-btn .status-label{white-space:nowrap}
+  .action-btn{padding:3px 7px}
+  .records-total{padding:10px 12px;font-size:13px}
+  .status-menu{min-width:160px;max-height:calc(100vh - 82px);overflow:auto;font-size:14px}
+  .status-option{padding:7px 10px;gap:8px}
+  .settings-panel{top:58px;right:18px;width:270px}
 }
