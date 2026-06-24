@@ -1,9 +1,11 @@
 const STORAGE_KEY = 'clinicflow_state_v5';
+const paymentMethods = ['Pix','Espécie','Crédito','Débito'];
 const statuses = [
   ['✅','Confirmado'],['😕','Faltou'],['🕒','Em espera'],['🪑','Em consulta'],['👁️','Dilatação'],
   ['🙂','Atendido'],['🚩','Desmarcado'],['📵','Não atendeu'],['🔕','Desligado'],['✕','Não estava'],['🟢','WhatsApp'],['🧽','Limpar status']
 ];
-const appointmentTypes = ['Sessão','Avaliação neuropsicológica'];
+const appointmentTypes = ['Sessão','Avaliação'];
+const appointmentNumberOptions = Array.from({length: 10}, (_, i) => i + 1);
 const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const state = loadState();
 let currentView = 'agenda';
@@ -32,7 +34,11 @@ const els = {
   consultFileList: document.getElementById('consultFileList'),
   patientAvatarPreview: document.getElementById('patientAvatarPreview'),
   patientsOptions: document.getElementById('patientsOptions'),
-  appointmentDate: document.getElementById('appointmentDate')
+  appointmentDate: document.getElementById('appointmentDate'),
+  financeSummaryGrid: document.getElementById('financeSummaryGrid'),
+  financeTableBody: document.getElementById('financeTableBody'),
+  financeMonthlyReport: document.getElementById('financeMonthlyReport'),
+  installmentsList: document.getElementById('installmentsList')
 };
 
 function loadState() {
@@ -59,7 +65,8 @@ function loadState() {
       seedPatient({id: uid(), record:'29262', name:'Abigail Feitosa de Araújo', birth:'2002-11-17', mobile:'8695810385', phone:'', gender:'Feminino', schooling:'Ensino médio completo', city:'Teresina', state:'PI'})
     ],
     appointments: [],
-    consultations: []
+    consultations: [],
+    financial: createSeedFinancialState()
   };
 }
 
@@ -71,6 +78,41 @@ function seedPatient(data) {
     schooling:'', profession:'', spouse:'', father:'', mother:'', cpf:'', rg:'', email:'', observations:'', insurance:'', insuranceNumber:'', insuranceValidity:'', insuranceAccommodation:'', insuranceNotes:'',
     notifications:true, inactive:false, blocked:false, dead:false, ...data
   };
+}
+
+function createSeedFinancialState() {
+  return {
+    activeFilter: 'all',
+    payments: [
+      {id:uid(), date:'2026-06-21', patient:'João da Silva', service:'Avaliação Neuropsicológica', total:499.99, received:250, method:'Pix', status:'Parcialmente Pago'},
+      {id:uid(), date:'2026-06-21', patient:'Maria Souza', service:'Consulta', total:150, received:150, method:'Espécie', status:'Pago'},
+      {id:uid(), date:'2026-06-21', patient:'Pedro Lima', service:'Avaliação', total:400, received:400, method:'Crédito', status:'Pago'},
+      {id:uid(), date:'2026-06-21', patient:'Lucas Ribeiro', service:'Sessão', total:100, received:100, method:'Débito', status:'Pago'},
+      {id:uid(), date:'2026-06-21', patient:'Carla Nunes', service:'Sessão', total:350, received:350, method:'Pix', status:'Pago'},
+      {id:uid(), date:'2026-06-21', patient:'Ana Beatriz', service:'Avaliação', total:500, received:0, method:'Pix', status:'Pendente'},
+      {id:uid(), date:'2026-06-18', patient:'Rafael Costa', service:'Consulta', total:500, received:500, method:'Espécie', status:'Pago'}
+    ],
+    monthlyTotals: { 'Pix': 5500, 'Crédito': 3000, 'Débito': 1500, 'Espécie': 2000 },
+    installments: [
+      {
+        id:uid(),
+        patient:'Joaquim Barbian Diniz',
+        total:499.99,
+        parts:[
+          {number:1, total:250, status:'Pago'},
+          {number:2, total:249.99, status:'Pendente'}
+        ]
+      }
+    ]
+  };
+}
+
+function ensureFinancialState() {
+  if (!state.financial) state.financial = createSeedFinancialState();
+  if (!Array.isArray(state.financial.payments)) state.financial.payments = createSeedFinancialState().payments;
+  if (!Array.isArray(state.financial.installments)) state.financial.installments = createSeedFinancialState().installments;
+  if (!state.financial.monthlyTotals) state.financial.monthlyTotals = createSeedFinancialState().monthlyTotals;
+  if (!state.financial.activeFilter) state.financial.activeFilter = 'all';
 }
 
 function seedDataPopulateAppointments() {
@@ -87,6 +129,8 @@ function seedDataPopulateAppointments() {
   ];
 }
 seedDataPopulateAppointments();
+ensureFinancialState();
+migrateAppointments();
 saveState();
 
 function saveState() {
@@ -121,6 +165,64 @@ function formatStatusText(ap) {
   return ap.status ? `${ap.status}${ap.statusTime ? ' ' + ap.statusTime : ''}` : '';
 }
 
+function normalizeAppointmentKind(value='') {
+  const text = String(value || '').trim().toLowerCase();
+  if (text.includes('avali')) return 'Avaliação';
+  if (text.includes('sess')) return 'Sessão';
+  return appointmentTypes.includes(value) ? value : 'Sessão';
+}
+
+function migrateAppointments() {
+  const counters = {};
+  const sorted = [...state.appointments].sort((a,b) => `${a.patientId || ''}-${a.date || ''}-${a.time || ''}`.localeCompare(`${b.patientId || ''}-${b.date || ''}-${b.time || ''}`));
+  sorted.forEach(ap => {
+    const kind = normalizeAppointmentKind(ap.type || ap.procedure);
+    const rawProcedure = String(ap.procedure || '').toLowerCase();
+    const procedureAlreadyUsesNewKind = rawProcedure.includes('sess') || rawProcedure.includes('avali');
+    ap.procedure = procedureAlreadyUsesNewKind ? normalizeAppointmentKind(ap.procedure) : kind;
+    ap.type = normalizeAppointmentKind(ap.type || kind);
+    const key = `${ap.patientId || ap.patient || ''}|${ap.type}`;
+    counters[key] = counters[key] || 0;
+    if (!Number(ap.attendanceNumber)) {
+      counters[key] += 1;
+      ap.attendanceNumber = Math.min(counters[key], 10);
+    } else {
+      counters[key] = Math.max(counters[key], Number(ap.attendanceNumber));
+    }
+  });
+}
+
+function getNextAttendanceNumber(patientId, kind, excludeId='') {
+  const normalizedKind = normalizeAppointmentKind(kind);
+  const sameKindAppointments = state.appointments.filter(a => {
+    if (a.id === excludeId) return false;
+    if (a.patientId !== patientId) return false;
+    return normalizeAppointmentKind(a.type || a.procedure) === normalizedKind;
+  });
+  const highestNumber = Math.max(0, ...sameKindAppointments.map(a => Number(a.attendanceNumber) || 0));
+  const next = highestNumber ? highestNumber + 1 : sameKindAppointments.length + 1;
+  return Math.min(Math.max(next, 1), 10);
+}
+
+function renderAttendanceNumberOptions(selectedNumber) {
+  const selected = Number(selectedNumber) || 1;
+  return appointmentNumberOptions
+    .map(number => `<option value="${number}"${number === selected ? ' selected' : ''}>${number}</option>`)
+    .join('');
+}
+
+
+function renderInlineKindSelect(ap, field, extraClass='') {
+  const selected = normalizeAppointmentKind(ap[field] || ap.type || ap.procedure);
+  return `<div class="inline-select-wrap ${extraClass}"><select class="inline-kind-select ${extraClass}" data-id="${ap.id}" data-field="${field}" aria-label="Mudar ${field === 'procedure' ? 'procedimento' : 'tipo'}">${appointmentTypes.map(type => `<option value="${escapeHtml(type)}"${type === selected ? ' selected' : ''}>${escapeHtml(type)}</option>`).join('')}</select><span class="inline-select-arrow">▾</span></div>`;
+}
+
+function formatAppointmentTypeCell(ap) {
+  const number = Number(ap.attendanceNumber) || 1;
+  return `<div class="appointment-type-cell">${renderInlineKindSelect(ap, 'type', 'type-select')}<div class="inline-select-wrap is-number"><select class="inline-attendance-number" data-id="${ap.id}" title="Mudar número do atendimento" aria-label="Número do atendimento">${renderAttendanceNumberOptions(number)}</select><span class="inline-select-arrow">▾</span></div></div>`;
+}
+
+
 const statusClassMap = {
   'Confirmado': 'confirmado',
   'Faltou': 'faltou',
@@ -147,6 +249,7 @@ function setView(viewId, options={}) {
   if (viewId === 'prontuario') renderRecordView();
   if (viewId === 'consulta') renderConsultView(options.consultation || null);
   if (viewId === 'cadastroPaciente') renderPatientEditForm(options.patientId || null);
+  if (viewId === 'financeiro') renderFinanceiro();
 }
 
 function renderCalendar() {
@@ -207,7 +310,7 @@ function renderBirthdays() {
 
 function getScheduleSlots() {
   const slots = [];
-  for (let h = 8; h <= 17; h++) {
+  for (let h = 7; h <= 17; h++) {
     for (let m = 0; m < 60; m += 15) {
       // intervalo de almoço igual ao modelo de referência
       if (h === 12 || (h === 13 && m < 30)) continue;
@@ -218,18 +321,30 @@ function getScheduleSlots() {
 }
 
 function renderAppointmentTypeOptions() {
-  const select = document.getElementById('appointmentType');
-  if (!select) return;
-  select.innerHTML = appointmentTypes
-    .map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`)
-    .join('');
+  const selects = [
+    document.getElementById('appointmentProcedure'),
+    document.getElementById('appointmentType')
+  ].filter(Boolean);
+
+  selects.forEach(select => {
+    select.innerHTML = appointmentTypes
+      .map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`)
+      .join('');
+  });
+
+  const numberSelect = document.getElementById('attendanceNumber');
+  if (numberSelect) {
+    numberSelect.innerHTML = appointmentNumberOptions
+      .map(number => `<option value="${number}">${number}</option>`)
+      .join('');
+  }
 }
 
 function getAppointmentsForSelectedDate() {
   let list = state.appointments.filter(a => a.date === state.selectedDate);
   const q = els.appointmentSearch.value.trim().toLowerCase();
   if (q) {
-    list = list.filter(a => [a.patient,a.procedure,a.type,formatStatusText(a)].join(' ').toLowerCase().includes(q));
+    list = list.filter(a => [a.patient,a.procedure,a.type,a.attendanceNumber,formatStatusText(a)].join(' ').toLowerCase().includes(q));
   }
   list.sort((a,b) => a.time.localeCompare(b.time));
   return list;
@@ -249,8 +364,8 @@ function renderSchedule() {
       div.innerHTML = `
         <span>${time}</span>
         <span class="patient-status-name">${escapeHtml(ap.patient)}</span>
-        <span>${escapeHtml(ap.procedure || '')}</span>
-        <span>${escapeHtml(ap.type || '')}</span>
+        <span>${renderInlineKindSelect(ap, 'procedure', 'procedure-select')}</span>
+        <span>${formatAppointmentTypeCell(ap)}</span>
         <span><button class="status-btn status-${rowStatusClass}" data-id="${ap.id}"><span class="status-icon">${statusIcon(ap.status)}</span><span class="status-label"> ${escapeHtml(formatStatusText(ap) || 'Sem status')}</span></button></span>
         <span class="row-actions">
           <button class="action-btn" data-action="open-record" data-patient-id="${ap.patientId || ''}">☰</button>
@@ -268,6 +383,30 @@ function renderSchedule() {
 
   document.querySelectorAll('.status-btn').forEach(b => b.onclick = e => openStatusMenu(e, b.dataset.id, b.dataset.time));
   document.querySelectorAll('.action-btn').forEach(b => b.onclick = () => handleRowAction(b.dataset.action, b.dataset));
+  document.querySelectorAll('.inline-kind-select').forEach(select => {
+    select.onclick = e => e.stopPropagation();
+    select.onchange = () => updateAppointmentKindInline(select.dataset.id, select.dataset.field, select.value);
+  });
+  document.querySelectorAll('.inline-attendance-number').forEach(select => {
+    select.onclick = e => e.stopPropagation();
+    select.onchange = () => updateAttendanceNumberInline(select.dataset.id, select.value);
+  });
+}
+
+function updateAppointmentKindInline(appointmentId, field, value) {
+  const ap = state.appointments.find(a => a.id === appointmentId);
+  if (!ap || !['procedure','type'].includes(field)) return;
+  ap[field] = normalizeAppointmentKind(value);
+  saveState();
+  renderSchedule();
+}
+
+function updateAttendanceNumberInline(appointmentId, value) {
+  const ap = state.appointments.find(a => a.id === appointmentId);
+  if (!ap) return;
+  const number = Number(value);
+  ap.attendanceNumber = Math.min(Math.max(number || 1, 1), 10);
+  saveState();
 }
 
 function statusIcon(status) {
@@ -547,23 +686,74 @@ function openAppointmentModal({time=null, date=null, appointmentId=null}={}) {
   const form = document.getElementById('appointmentForm');
   form.reset();
   form.dataset.editId = appointmentId || '';
+  form.dataset.numberManual = 'false';
+
   const targetDate = date || state.selectedDate;
   els.appointmentDate.value = targetDate;
+  form.querySelector('[name="procedure"]').value = appointmentTypes[0];
   form.querySelector('[name="type"]').value = appointmentTypes[0];
+  form.querySelector('[name="attendanceNumber"]').value = '1';
+
   if (time) form.querySelector('[name="time"]').value = time;
+
   if (appointmentId) {
     const ap = state.appointments.find(a => a.id === appointmentId);
     if (ap) {
+      const kind = normalizeAppointmentKind(ap.type || ap.procedure);
       form.querySelector('[name="patient"]').value = ap.patient;
       form.querySelector('[name="date"]').value = ap.date;
       form.querySelector('[name="time"]').value = ap.time;
-      form.querySelector('[name="procedure"]').value = ap.procedure || '';
-      form.querySelector('[name="type"]').value = ap.type || appointmentTypes[0];
+      form.querySelector('[name="procedure"]').value = normalizeAppointmentKind(ap.procedure || kind);
+      form.querySelector('[name="type"]').value = kind;
+      form.querySelector('[name="attendanceNumber"]').value = String(Number(ap.attendanceNumber) || getNextAttendanceNumber(ap.patientId, kind, ap.id));
       form.querySelector('[name="notes"]').value = ap.notes || '';
+      form.dataset.numberManual = 'true';
     }
+  } else {
+    syncAppointmentNumberFromForm(true);
   }
+
   modal.classList.add('show');
 }
+
+function syncAppointmentNumberFromForm(force=false) {
+  const form = document.getElementById('appointmentForm');
+  if (!form) return;
+  if (!force && form.dataset.numberManual === 'true') return;
+
+  const numberSelect = form.querySelector('[name="attendanceNumber"]');
+  if (!numberSelect) return;
+
+  const patientName = (form.querySelector('[name="patient"]')?.value || '').trim();
+  const patient = state.patients.find(p => p.name.toLowerCase() === patientName.toLowerCase());
+  const kind = form.querySelector('[name="type"]')?.value || appointmentTypes[0];
+  numberSelect.value = String(patient ? getNextAttendanceNumber(patient.id, kind, form.dataset.editId || '') : 1);
+}
+
+function setupAppointmentAutoNumberListeners() {
+  const form = document.getElementById('appointmentForm');
+  if (!form) return;
+
+  const patientInput = form.querySelector('[name="patient"]');
+  const procedureSelect = form.querySelector('[name="procedure"]');
+  const typeSelect = form.querySelector('[name="type"]');
+  const numberSelect = form.querySelector('[name="attendanceNumber"]');
+
+  patientInput?.addEventListener('input', () => syncAppointmentNumberFromForm());
+
+  procedureSelect?.addEventListener('change', () => {
+    // Procedimento e Tipo são independentes: mudar um não altera o outro.
+  });
+
+  typeSelect?.addEventListener('change', () => {
+    syncAppointmentNumberFromForm();
+  });
+
+  numberSelect?.addEventListener('change', () => {
+    form.dataset.numberManual = 'true';
+  });
+}
+
 
 function openStatusMenu(e, appointmentId, emptyTime) {
   const menu = document.getElementById('statusMenu');
@@ -621,14 +811,20 @@ function saveAppointment(e) {
     patient = seedPatient({id:uid(), record:String(Math.floor(10000+Math.random()*89999)), name: patientName, birth:'', mobile:'', phone:''});
     state.patients.unshift(patient);
   }
+
+  const type = normalizeAppointmentKind(fd.get('type') || appointmentTypes[0]);
+  const procedure = normalizeAppointmentKind(fd.get('procedure') || type);
+  const manualNumber = Number(fd.get('attendanceNumber'));
+
   const payload = {
     id: form.dataset.editId || uid(),
     date: fd.get('date'),
     time: fd.get('time'),
     patientId: patient.id,
     patient: patient.name,
-    procedure: fd.get('procedure') || '',
-    type: fd.get('type') || appointmentTypes[0],
+    procedure,
+    type,
+    attendanceNumber: manualNumber || getNextAttendanceNumber(patient.id, type, form.dataset.editId || ''),
     status: 'Confirmado',
     statusTime: currentClock(),
     notes: fd.get('notes') || ''
@@ -641,6 +837,7 @@ function saveAppointment(e) {
   renderPatients(els.patientSearch.value || '');
   renderAgenda();
 }
+
 
 function saveConsultation(status='finalizado') {
   const form = document.getElementById('consultationForm');
@@ -679,6 +876,144 @@ function saveConsultation(status='finalizado') {
   clearInterval(consultTimerInterval);
   alert(status === 'rascunho' ? 'Rascunho salvo.' : 'Atendimento finalizado com sucesso.');
   setView('prontuario');
+}
+
+
+function formatMoney(value) {
+  return new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'}).format(Number(value) || 0);
+}
+
+function normalizeFinancialStatus(total, received) {
+  const totalValue = Number(total) || 0;
+  const receivedValue = Number(received) || 0;
+  if (receivedValue <= 0) return 'Pendente';
+  if (receivedValue >= totalValue && totalValue > 0) return 'Pago';
+  return 'Parcialmente Pago';
+}
+
+function financeStatusClass(status='') {
+  return String(status || '').toLowerCase().replaceAll(' ','-');
+}
+
+function renderFinanceiro() {
+  if (!els.financeSummaryGrid) return;
+  ensureFinancialState();
+  renderFinanceSummary();
+  renderFinanceTable();
+  renderFinanceMonthlyReport();
+  renderInstallments();
+  updatePaymentStatusPreview();
+  const dateInput = document.getElementById('paymentDate');
+  if (dateInput && !dateInput.value) dateInput.value = state.selectedDate;
+}
+
+function getFinanceSummaryData() {
+  const currentDate = state.selectedDate;
+  const todaysPayments = state.financial.payments.filter(item => item.date === currentDate);
+  const totalReceived = todaysPayments.reduce((sum, item) => sum + (Number(item.received) || 0), 0);
+  const byMethod = Object.fromEntries(paymentMethods.map(method => [method, 0]));
+  todaysPayments.forEach(item => {
+    const method = paymentMethods.includes(item.method) ? item.method : 'Pix';
+    byMethod[method] += Number(item.received) || 0;
+  });
+  const pending = todaysPayments.filter(item => item.status === 'Pendente').reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  return [
+    {label:'Recebido hoje', value: totalReceived, meta: formatDateBR(currentDate)},
+    {label:'Pix', value: byMethod['Pix'], meta:'Lançamentos do dia'},
+    {label:'Espécie', value: byMethod['Espécie'], meta:'Lançamentos do dia'},
+    {label:'Crédito', value: byMethod['Crédito'], meta:'Lançamentos do dia'},
+    {label:'Débito', value: byMethod['Débito'], meta:'Lançamentos do dia'},
+    {label:'Pendente', value: pending, meta:'Ainda não recebido'}
+  ];
+}
+
+function renderFinanceSummary() {
+  const cards = getFinanceSummaryData();
+  els.financeSummaryGrid.innerHTML = cards.map(card => `
+    <div class="finance-summary-card">
+      <span class="finance-summary-label">${escapeHtml(card.label)}</span>
+      <strong class="finance-summary-value">${escapeHtml(formatMoney(card.value))}</strong>
+      <span class="finance-summary-meta">${escapeHtml(card.meta)}</span>
+    </div>`).join('');
+}
+
+function getFilteredPayments() {
+  const active = state.financial.activeFilter || 'all';
+  const all = [...state.financial.payments].sort((a,b) => (b.date + b.patient).localeCompare(a.date + a.patient));
+  if (active === 'all') return all;
+  return all.filter(item => item.status === active);
+}
+
+function renderFinanceTable() {
+  if (!els.financeTableBody) return;
+  const rows = getFilteredPayments();
+  els.financeTableBody.innerHTML = rows.length ? rows.map(item => `
+    <tr>
+      <td>${escapeHtml(formatDateBR(item.date))}</td>
+      <td>${escapeHtml(item.patient)}</td>
+      <td>${escapeHtml(item.service)}</td>
+      <td>${escapeHtml(item.method)}</td>
+      <td><span class="finance-status-badge ${financeStatusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+      <td>${escapeHtml(formatMoney(item.received || item.total))}</td>
+    </tr>`).join('') : '<tr><td colspan="6">Nenhum lançamento encontrado.</td></tr>';
+  document.querySelectorAll('#financeFilters .filter-pill').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === (state.financial.activeFilter || 'all')));
+}
+
+function renderFinanceMonthlyReport() {
+  if (!els.financeMonthlyReport) return;
+  const totals = state.financial.monthlyTotals || {};
+  const totalGeral = Object.values(totals).reduce((sum, value) => sum + (Number(value) || 0), 0);
+  els.financeMonthlyReport.innerHTML = `<div class="report-list">${paymentMethods.map(method => `<div class="report-row"><span>${escapeHtml(method)}</span><strong>${escapeHtml(formatMoney(totals[method] || 0))}</strong></div>`).join('')}<div class="report-row"><span>Total geral</span><strong>${escapeHtml(formatMoney(totalGeral))}</strong></div></div>`;
+  const monthLabel = document.getElementById('financeMonthLabel');
+  if (monthLabel) monthLabel.textContent = 'Junho/2026';
+}
+
+function renderInstallments() {
+  if (!els.installmentsList) return;
+  const items = state.financial.installments || [];
+  els.installmentsList.innerHTML = items.length ? `<div class="installment-list">${items.map(item => {
+    const balance = (item.parts || []).filter(part => part.status !== 'Pago').reduce((sum, part) => sum + (Number(part.total) || 0), 0);
+    return `<div class="installment-card"><div class="installment-top"><div><strong>${escapeHtml(item.patient)}</strong><div class="installment-balance">Saldo em aberto: ${escapeHtml(formatMoney(balance))}</div></div><strong>${escapeHtml(formatMoney(item.total))}</strong></div><div class="installment-parts">${(item.parts || []).map(part => `<div class="installment-part"><span>Parcela ${part.number}/${item.parts.length}</span><span>${escapeHtml(formatMoney(part.total))} · ${escapeHtml(part.status)}</span></div>`).join('')}</div></div>`;
+  }).join('')}</div>` : '<div class="empty-state">Nenhum parcelamento cadastrado.</div>';
+}
+
+function updatePaymentStatusPreview() {
+  const total = Number(document.getElementById('paymentTotal')?.value || 0);
+  const received = Number(document.getElementById('paymentReceived')?.value || 0);
+  const preview = document.getElementById('paymentStatusPreview');
+  if (!preview) return;
+  preview.innerHTML = `Status previsto: <strong>${escapeHtml(normalizeFinancialStatus(total, received))}</strong>`;
+}
+
+function savePayment(e) {
+  e.preventDefault();
+  const form = document.getElementById('paymentForm');
+  const fd = new FormData(form);
+  const patient = String(fd.get('patient') || '').trim();
+  const total = Number(fd.get('total') || 0);
+  const received = Number(fd.get('received') || 0);
+  if (!patient) { alert('Informe o nome do paciente.'); return; }
+  if (!total) { alert('Informe o valor total.'); return; }
+  const item = {
+    id: uid(),
+    patient,
+    service: String(fd.get('service') || 'Sessão'),
+    total,
+    received,
+    method: String(fd.get('method') || 'Pix'),
+    date: String(fd.get('date') || state.selectedDate),
+    status: normalizeFinancialStatus(total, received)
+  };
+  state.financial.payments.unshift(item);
+  const currentTotal = Number(state.financial.monthlyTotals[item.method] || 0);
+  state.financial.monthlyTotals[item.method] = currentTotal + received;
+  saveState();
+  form.reset();
+  const dateInput = document.getElementById('paymentDate');
+  if (dateInput) dateInput.value = state.selectedDate;
+  updatePaymentStatusPreview();
+  renderFinanceiro();
+  alert('Pagamento salvo com sucesso.');
 }
 
 function maskPhone(value) {
@@ -801,6 +1136,20 @@ document.getElementById('consultFileInput').addEventListener('change', e => {
   renderConsultFileList();
   e.target.value = '';
 });
+
+document.getElementById('newPaymentBtn')?.addEventListener('click', () => {
+  setView('financeiro');
+  document.getElementById('paymentPatient')?.focus();
+});
+document.getElementById('paymentForm')?.addEventListener('submit', savePayment);
+document.getElementById('paymentTotal')?.addEventListener('input', updatePaymentStatusPreview);
+document.getElementById('paymentReceived')?.addEventListener('input', updatePaymentStatusPreview);
+document.querySelectorAll('#financeFilters .filter-pill').forEach(btn => btn.addEventListener('click', () => {
+  state.financial.activeFilter = btn.dataset.filter;
+  saveState();
+  renderFinanceTable();
+}));
+
 document.addEventListener('click', e => {
   if (!e.target.closest('.status-btn') && !e.target.closest('#statusMenu')) document.getElementById('statusMenu').classList.remove('show');
   if (!e.target.closest('#settingsPanel') && !e.target.closest('#settingsBtn')) toggleSettingsPanel(false);
@@ -847,6 +1196,8 @@ function handlePhotoChange(e) {
 
 // init
 renderAppointmentTypeOptions();
+setupAppointmentAutoNumberListeners();
 renderPatients();
 renderAgenda();
+renderFinanceiro();
 setView('agenda');

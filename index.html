@@ -16,6 +16,7 @@
       <nav>
         <button class="nav-item active" data-view="agenda"><span>▦</span> Agenda</button>
         <button class="nav-item" data-view="pacientes"><span>👥</span> Pacientes</button>
+        <button class="nav-item" data-view="financeiro"><span>💰</span> Financeiro</button>
       </nav>
     </aside>
 
@@ -84,6 +85,96 @@
             <thead><tr><th>Nome</th><th>Idade</th><th>Data Nasc.</th><th>Telefone</th><th>E-mail</th><th>Cidade</th><th>Ações</th></tr></thead>
             <tbody id="patientsBody"></tbody>
           </table>
+        </div>
+      </section>
+
+
+      <section id="financeiro" class="view">
+        <div class="breadcrumbs">Início <span>›</span> Financeiro</div>
+        <div class="finance-header">
+          <div>
+            <h2>Financeiro</h2>
+            <p>Resumo diário, registro de recebimentos e relatório mensal.</p>
+          </div>
+          <button class="new-patient-btn small" id="newPaymentBtn">Novo recebimento</button>
+        </div>
+
+        <div class="finance-summary-grid" id="financeSummaryGrid"></div>
+
+        <div class="finance-layout">
+          <div class="finance-main">
+            <div class="finance-card">
+              <div class="section-header finance-section-header">
+                <strong>Registro de recebimento</strong>
+                <span class="finance-caption">Lançamento rápido</span>
+              </div>
+              <form id="paymentForm" class="payment-form">
+                <div class="field-grid two-up">
+                  <label>Paciente<input name="patient" id="paymentPatient" placeholder="Nome do paciente" list="patientsOptions" /></label>
+                  <label>Procedimento
+                    <select name="service" id="paymentService">
+                      <option>Sessão</option>
+                      <option>Avaliação Neuropsicológica</option>
+                      <option>Consulta</option>
+                    </select>
+                  </label>
+                  <label>Valor total<input name="total" id="paymentTotal" type="number" min="0" step="0.01" placeholder="0,00" /></label>
+                  <label>Valor recebido<input name="received" id="paymentReceived" type="number" min="0" step="0.01" placeholder="0,00" /></label>
+                  <label>Forma de pagamento
+                    <select name="method" id="paymentMethod">
+                      <option>Pix</option>
+                      <option>Espécie</option>
+                      <option>Crédito</option>
+                      <option>Débito</option>
+                    </select>
+                  </label>
+                  <label>Data<input name="date" id="paymentDate" type="date" /></label>
+                </div>
+                <div class="finance-form-actions">
+                  <div class="finance-status-helper" id="paymentStatusPreview">Status previsto: <strong>Pendente</strong></div>
+                  <button type="submit" class="save-btn">Salvar pagamento</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="finance-card">
+              <div class="section-header finance-section-header">
+                <strong>Tabela financeira</strong>
+                <div class="finance-filter-pills" id="financeFilters">
+                  <button type="button" class="filter-pill active" data-filter="all">Todos</button>
+                  <button type="button" class="filter-pill" data-filter="Pago">Pagos</button>
+                  <button type="button" class="filter-pill" data-filter="Parcialmente Pago">Parciais</button>
+                  <button type="button" class="filter-pill" data-filter="Pendente">Pendentes</button>
+                </div>
+              </div>
+              <div class="finance-table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Data</th><th>Paciente</th><th>Serviço</th><th>Forma</th><th>Status</th><th>Valor</th></tr>
+                  </thead>
+                  <tbody id="financeTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <aside class="finance-side">
+            <div class="finance-card">
+              <div class="section-header finance-section-header">
+                <strong>Relatório mensal</strong>
+                <span class="finance-caption" id="financeMonthLabel">Junho/2026</span>
+              </div>
+              <div id="financeMonthlyReport"></div>
+            </div>
+
+            <div class="finance-card">
+              <div class="section-header finance-section-header">
+                <strong>Controle de parcelamentos</strong>
+                <span class="finance-caption">Saldo em aberto</span>
+              </div>
+              <div id="installmentsList"></div>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -264,10 +355,18 @@
         <datalist id="patientsOptions"></datalist>
         <label>Data<input required name="date" id="appointmentDate" type="date" /></label>
         <label>Horário<input required name="time" type="time" value="09:00" /></label>
-        <label>Procedimento<input name="procedure" value="CONSULTA" placeholder="Digite o procedimento" /></label>
-        <label>Tipo<select name="type" id="appointmentType"><option>Sessão</option><option>Avaliação neuropsicológica</option></select></label>
+        <label>Procedimento<select name="procedure" id="appointmentProcedure"><option>Sessão</option><option>Avaliação</option></select></label>
+        <label class="type-number-label">Tipo
+          <div class="type-number-row">
+            <select name="type" id="appointmentType"><option>Sessão</option><option>Avaliação</option></select>
+            <select name="attendanceNumber" id="attendanceNumber" title="Número do atendimento" aria-label="Número do atendimento">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+              <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            </select>
+          </div>
+        </label>
         <label class="full">Observações<textarea name="notes" rows="3"></textarea></label>
-        <div class="modal-actions full"><button type="button" class="cancel-btn close-modal">Cancelar</button><button class="save-btn">Salvar</button></div>
+        <div class="modal-actions full"><button type="button" class="cancel-btn close-modal">Cancelar</button><button class="save-btn">Salvar agendamento</button></div>
       </form>
     </div>
   </div>
