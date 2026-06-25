@@ -62,8 +62,14 @@
           </aside>
 
           <div class="schedule-panel">
+            <div class="schedule-free-time">
+              <label>Horário livre
+                <input id="customTimeInput" type="time" step="60" value="08:05" aria-label="Horário livre" />
+              </label>
+              <button type="button" class="secondary-btn free-time-btn" id="customTimeAddBtn">＋ Agendar horário livre</button>
+            </div>
             <div class="schedule-head schedule-grid">
-              <span>Hora</span><span>Paciente</span><span>Procedimento</span><span>Tipo</span><span class="status-head-label">Status</span><span></span>
+              <span>Hora</span><span>Paciente</span><span>Procedimento</span><span>Tipo</span><span class="status-head-label">Status</span><span>Ações</span>
             </div>
             <div id="scheduleRows"></div>
             <div class="records-total">Total de registros: <strong id="totalRecords">0</strong></div>
@@ -160,9 +166,16 @@
 
           <aside class="finance-side">
             <div class="finance-card">
-              <div class="section-header finance-section-header">
-                <strong>Relatório mensal</strong>
-                <span class="finance-caption" id="financeMonthLabel">Junho/2026</span>
+              <div class="section-header finance-section-header finance-month-header">
+                <div>
+                  <strong>Relatório mensal</strong>
+                  <span class="finance-caption" id="financeMonthLabel">Junho/2026</span>
+                </div>
+                <div class="finance-month-controls" aria-label="Selecionar mês financeiro">
+                  <button type="button" id="prevFinanceMonthBtn" title="Mês anterior">‹</button>
+                  <button type="button" id="currentFinanceMonthBtn" title="Mês atual">Mês atual</button>
+                  <button type="button" id="nextFinanceMonthBtn" title="Próximo mês">›</button>
+                </div>
               </div>
               <div id="financeMonthlyReport"></div>
             </div>
@@ -354,7 +367,7 @@
         <label class="full">Paciente<input required name="patient" id="appointmentPatient" placeholder="Digite o nome do paciente" list="patientsOptions" /></label>
         <datalist id="patientsOptions"></datalist>
         <label>Data<input required name="date" id="appointmentDate" type="date" /></label>
-        <label>Horário<input required name="time" type="time" value="09:00" /></label>
+        <label>Horário<input required name="time" type="time" step="60" value="09:00" /></label>
         <label>Procedimento<select name="procedure" id="appointmentProcedure"><option>Sessão</option><option>Avaliação</option></select></label>
         <label class="type-number-label">Tipo
           <div class="type-number-row">

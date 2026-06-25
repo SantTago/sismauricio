@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'clinicflow_state_v5';
 const paymentMethods = ['Pix','Espécie','Crédito','Débito'];
+const financeMethodPalette = { Pix:'#00a884', 'Espécie':'#f59e0b', 'Crédito':'#7c3aed', 'Débito':'#0ea5e9' };
 const statuses = [
   ['✅','Confirmado'],['😕','Faltou'],['🕒','Em espera'],['🪑','Em consulta'],['👁️','Dilatação'],
   ['🙂','Atendido'],['🚩','Desmarcado'],['📵','Não atendeu'],['🔕','Desligado'],['✕','Não estava'],['🟢','WhatsApp'],['🧽','Limpar status']
@@ -113,6 +114,11 @@ function ensureFinancialState() {
   if (!Array.isArray(state.financial.installments)) state.financial.installments = createSeedFinancialState().installments;
   if (!state.financial.monthlyTotals) state.financial.monthlyTotals = createSeedFinancialState().monthlyTotals;
   if (!state.financial.activeFilter) state.financial.activeFilter = 'all';
+  if (!state.financial.selectedMonth) state.financial.selectedMonth = getMonthKey(state.selectedDate);
+  state.financial.payments.forEach(item => {
+    if (!paymentMethods.includes(item.method)) item.method = 'Pix';
+    item.status = normalizeFinancialStatus(item.total, item.received);
+  });
 }
 
 function seedDataPopulateAppointments() {
@@ -320,6 +326,24 @@ function getScheduleSlots() {
   return slots;
 }
 
+function normalizeScheduleTime(value='') {
+  const match = String(value || '').match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return '09:00';
+  const hour = Math.min(Math.max(Number(match[1]) || 0, 0), 23);
+  const minute = Math.min(Math.max(Number(match[2]) || 0, 0), 59);
+  return `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+}
+
+function sortScheduleTimes(a, b) {
+  return normalizeScheduleTime(a).localeCompare(normalizeScheduleTime(b));
+}
+
+function getScheduleTimesForSelectedDate(appointments) {
+  const fixedSlots = getScheduleSlots();
+  const appointmentTimes = appointments.map(a => normalizeScheduleTime(a.time)).filter(Boolean);
+  return [...new Set([...fixedSlots, ...appointmentTimes])].sort(sortScheduleTimes);
+}
+
 function renderAppointmentTypeOptions() {
   const selects = [
     document.getElementById('appointmentProcedure'),
@@ -354,28 +378,34 @@ function renderSchedule() {
   const rows = els.scheduleRows;
   rows.innerHTML='';
   const appointments = getAppointmentsForSelectedDate();
-  const map = Object.fromEntries(appointments.map(a => [a.time,a]));
-  getScheduleSlots().forEach(time => {
+  const map = Object.fromEntries(appointments.map(a => [normalizeScheduleTime(a.time), {...a, time: normalizeScheduleTime(a.time)}]));
+  const fixedSlots = new Set(getScheduleSlots());
+
+  getScheduleTimesForSelectedDate(appointments).forEach(time => {
     const ap = map[time];
     const div = document.createElement('div');
     const rowStatusClass = ap ? statusClass(ap.status) : '';
-    div.className = 'schedule-row schedule-grid' + (ap ? ` status-${rowStatusClass}` : ' empty') + (time === '13:30' ? ' break-before' : '');
+    const isCustomTime = !fixedSlots.has(time);
+    div.className = 'schedule-row schedule-grid' + (ap ? ` status-${rowStatusClass}` : ' empty') + (isCustomTime ? ' custom-time' : '') + (time === '13:30' ? ' break-before' : '');
     if (ap) {
       div.innerHTML = `
-        <span>${time}</span>
-        <span class="patient-status-name">${escapeHtml(ap.patient)}</span>
-        <span>${renderInlineKindSelect(ap, 'procedure', 'procedure-select')}</span>
-        <span>${formatAppointmentTypeCell(ap)}</span>
-        <span><button class="status-btn status-${rowStatusClass}" data-id="${ap.id}"><span class="status-icon">${statusIcon(ap.status)}</span><span class="status-label"> ${escapeHtml(formatStatusText(ap) || 'Sem status')}</span></button></span>
-        <span class="row-actions">
-          <button class="action-btn" data-action="open-record" data-patient-id="${ap.patientId || ''}">☰</button>
-          <button class="action-btn" data-action="edit-appt" data-id="${ap.id}">✎</button>
+        <span data-label="Hora">${escapeHtml(time)}${isCustomTime ? '<em class="custom-time-badge">livre</em>' : ''}</span>
+        <span data-label="Paciente" class="patient-status-name">${escapeHtml(ap.patient)}</span>
+        <span data-label="Procedimento">${renderInlineKindSelect(ap, 'procedure', 'procedure-select')}</span>
+        <span data-label="Tipo">${formatAppointmentTypeCell(ap)}</span>
+        <span data-label="Status"><button class="status-btn status-${rowStatusClass}" data-id="${ap.id}"><span class="status-icon">${statusIcon(ap.status)}</span><span class="status-label"> ${escapeHtml(formatStatusText(ap) || 'Sem status')}</span></button></span>
+        <span data-label="Ações" class="row-actions">
+          <button class="action-btn" data-action="open-record" data-patient-id="${ap.patientId || ''}" title="Abrir prontuário">☰</button>
+          <button class="action-btn" data-action="edit-appt" data-id="${ap.id}" title="Editar agendamento">✎</button>
         </span>`;
     } else {
       div.innerHTML = `
-        <span>${time}</span><span></span><span></span><span></span>
-        <span><button class="status-btn" data-time="${time}"><span class="status-icon">⊘</span><span class="status-label"></span></button></span>
-        <span class="row-actions"><button class="action-btn" data-action="quick-add" data-time="${time}">＋</button></span>`;
+        <span data-label="Hora">${escapeHtml(time)}</span>
+        <span data-label="Paciente"></span>
+        <span data-label="Procedimento"></span>
+        <span data-label="Tipo"></span>
+        <span data-label="Status"><button class="status-btn" data-time="${escapeHtml(time)}"><span class="status-icon">⊘</span><span class="status-label">Livre</span></button></span>
+        <span data-label="Ações" class="row-actions"><button class="action-btn" data-action="quick-add" data-time="${escapeHtml(time)}" title="Agendar neste horário">＋</button></span>`;
     }
     rows.appendChild(div);
   });
@@ -681,6 +711,14 @@ function printPatient(id) {
   w.document.write(html); w.document.close();
 }
 
+
+function openCustomTimeAppointment() {
+  const input = document.getElementById('customTimeInput');
+  const time = normalizeScheduleTime(input?.value || '08:05');
+  if (input) input.value = time;
+  openAppointmentModal({time, date: state.selectedDate});
+}
+
 function openAppointmentModal({time=null, date=null, appointmentId=null}={}) {
   const modal = document.getElementById('appointmentModal');
   const form = document.getElementById('appointmentForm');
@@ -694,7 +732,7 @@ function openAppointmentModal({time=null, date=null, appointmentId=null}={}) {
   form.querySelector('[name="type"]').value = appointmentTypes[0];
   form.querySelector('[name="attendanceNumber"]').value = '1';
 
-  if (time) form.querySelector('[name="time"]').value = time;
+  if (time) form.querySelector('[name="time"]').value = normalizeScheduleTime(time);
 
   if (appointmentId) {
     const ap = state.appointments.find(a => a.id === appointmentId);
@@ -702,7 +740,7 @@ function openAppointmentModal({time=null, date=null, appointmentId=null}={}) {
       const kind = normalizeAppointmentKind(ap.type || ap.procedure);
       form.querySelector('[name="patient"]').value = ap.patient;
       form.querySelector('[name="date"]').value = ap.date;
-      form.querySelector('[name="time"]').value = ap.time;
+      form.querySelector('[name="time"]').value = normalizeScheduleTime(ap.time);
       form.querySelector('[name="procedure"]').value = normalizeAppointmentKind(ap.procedure || kind);
       form.querySelector('[name="type"]').value = kind;
       form.querySelector('[name="attendanceNumber"]').value = String(Number(ap.attendanceNumber) || getNextAttendanceNumber(ap.patientId, kind, ap.id));
@@ -819,7 +857,7 @@ function saveAppointment(e) {
   const payload = {
     id: form.dataset.editId || uid(),
     date: fd.get('date'),
-    time: fd.get('time'),
+    time: normalizeScheduleTime(fd.get('time')), 
     patientId: patient.id,
     patient: patient.name,
     procedure,
@@ -895,6 +933,55 @@ function financeStatusClass(status='') {
   return String(status || '').toLowerCase().replaceAll(' ','-');
 }
 
+function financeMethodClass(method='') {
+  return String(method || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+}
+
+function getMonthKey(dateIso) {
+  const fallback = new Date().toISOString().slice(0,7);
+  return String(dateIso || fallback).slice(0,7);
+}
+
+function getFinanceMonthKey() {
+  ensureFinancialState();
+  return state.financial.selectedMonth || getMonthKey(state.selectedDate);
+}
+
+function getMonthLabel(monthKey) {
+  const [year, month] = String(monthKey || getMonthKey()).split('-');
+  const monthIndex = Math.max(0, Math.min(11, Number(month) - 1));
+  return `${months[monthIndex]}/${year}`;
+}
+
+function shiftFinanceMonth(direction) {
+  ensureFinancialState();
+  const [year, month] = getFinanceMonthKey().split('-').map(Number);
+  const d = new Date(year, month - 1 + direction, 1);
+  state.financial.selectedMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  saveState();
+  renderFinanceiro();
+}
+
+function setCurrentFinanceMonth() {
+  ensureFinancialState();
+  state.financial.selectedMonth = getMonthKey(new Date().toISOString().slice(0,10));
+  saveState();
+  renderFinanceiro();
+}
+
+function getPaymentsForFinanceMonth(monthKey=getFinanceMonthKey()) {
+  return state.financial.payments.filter(item => getMonthKey(item.date) === monthKey);
+}
+
+function getFinanceMonthTotals(monthKey=getFinanceMonthKey()) {
+  const totals = Object.fromEntries(paymentMethods.map(method => [method, 0]));
+  getPaymentsForFinanceMonth(monthKey).forEach(item => {
+    const method = paymentMethods.includes(item.method) ? item.method : 'Pix';
+    totals[method] += Number(item.received) || 0;
+  });
+  return totals;
+}
+
 function renderFinanceiro() {
   if (!els.financeSummaryGrid) return;
   ensureFinancialState();
@@ -908,29 +995,28 @@ function renderFinanceiro() {
 }
 
 function getFinanceSummaryData() {
-  const currentDate = state.selectedDate;
-  const todaysPayments = state.financial.payments.filter(item => item.date === currentDate);
-  const totalReceived = todaysPayments.reduce((sum, item) => sum + (Number(item.received) || 0), 0);
-  const byMethod = Object.fromEntries(paymentMethods.map(method => [method, 0]));
-  todaysPayments.forEach(item => {
-    const method = paymentMethods.includes(item.method) ? item.method : 'Pix';
-    byMethod[method] += Number(item.received) || 0;
-  });
-  const pending = todaysPayments.filter(item => item.status === 'Pendente').reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const monthKey = getFinanceMonthKey();
+  const monthPayments = getPaymentsForFinanceMonth(monthKey);
+  const totalReceived = monthPayments.reduce((sum, item) => sum + (Number(item.received) || 0), 0);
+  const byMethod = getFinanceMonthTotals(monthKey);
+  const pending = monthPayments.reduce((sum, item) => {
+    const open = Math.max((Number(item.total) || 0) - (Number(item.received) || 0), 0);
+    return sum + open;
+  }, 0);
   return [
-    {label:'Recebido hoje', value: totalReceived, meta: formatDateBR(currentDate)},
-    {label:'Pix', value: byMethod['Pix'], meta:'Lançamentos do dia'},
-    {label:'Espécie', value: byMethod['Espécie'], meta:'Lançamentos do dia'},
-    {label:'Crédito', value: byMethod['Crédito'], meta:'Lançamentos do dia'},
-    {label:'Débito', value: byMethod['Débito'], meta:'Lançamentos do dia'},
-    {label:'Pendente', value: pending, meta:'Ainda não recebido'}
+    {label:'Recebido no mês', value: totalReceived, meta: getMonthLabel(monthKey), method:'total'},
+    {label:'Pix', value: byMethod['Pix'], meta:'Total do mês', method:'Pix'},
+    {label:'Espécie', value: byMethod['Espécie'], meta:'Dinheiro recebido', method:'Espécie'},
+    {label:'Crédito', value: byMethod['Crédito'], meta:'Cartão no mês', method:'Crédito'},
+    {label:'Débito', value: byMethod['Débito'], meta:'Cartão no mês', method:'Débito'},
+    {label:'Pendente', value: pending, meta:'Saldo em aberto', method:'pending'}
   ];
 }
 
 function renderFinanceSummary() {
   const cards = getFinanceSummaryData();
   els.financeSummaryGrid.innerHTML = cards.map(card => `
-    <div class="finance-summary-card">
+    <div class="finance-summary-card method-${escapeHtml(financeMethodClass(card.method))}" style="--method-color:${escapeHtml(financeMethodPalette[card.method] || '#1a73e8')}">
       <span class="finance-summary-label">${escapeHtml(card.label)}</span>
       <strong class="finance-summary-value">${escapeHtml(formatMoney(card.value))}</strong>
       <span class="finance-summary-meta">${escapeHtml(card.meta)}</span>
@@ -939,7 +1025,8 @@ function renderFinanceSummary() {
 
 function getFilteredPayments() {
   const active = state.financial.activeFilter || 'all';
-  const all = [...state.financial.payments].sort((a,b) => (b.date + b.patient).localeCompare(a.date + a.patient));
+  const monthKey = getFinanceMonthKey();
+  const all = getPaymentsForFinanceMonth(monthKey).sort((a,b) => (b.date + b.patient).localeCompare(a.date + a.patient));
   if (active === 'all') return all;
   return all.filter(item => item.status === active);
 }
@@ -947,25 +1034,41 @@ function getFilteredPayments() {
 function renderFinanceTable() {
   if (!els.financeTableBody) return;
   const rows = getFilteredPayments();
+  const monthLabel = getMonthLabel(getFinanceMonthKey());
   els.financeTableBody.innerHTML = rows.length ? rows.map(item => `
     <tr>
-      <td>${escapeHtml(formatDateBR(item.date))}</td>
-      <td>${escapeHtml(item.patient)}</td>
-      <td>${escapeHtml(item.service)}</td>
-      <td>${escapeHtml(item.method)}</td>
-      <td><span class="finance-status-badge ${financeStatusClass(item.status)}">${escapeHtml(item.status)}</span></td>
-      <td>${escapeHtml(formatMoney(item.received || item.total))}</td>
-    </tr>`).join('') : '<tr><td colspan="6">Nenhum lançamento encontrado.</td></tr>';
+      <td data-label="Data">${escapeHtml(formatDateBR(item.date))}</td>
+      <td data-label="Paciente">${escapeHtml(item.patient)}</td>
+      <td data-label="Serviço">${escapeHtml(item.service)}</td>
+      <td data-label="Forma"><span class="method-pill method-${escapeHtml(financeMethodClass(item.method))}">${escapeHtml(item.method)}</span></td>
+      <td data-label="Status"><span class="finance-status-badge ${financeStatusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+      <td data-label="Valor">${escapeHtml(formatMoney(item.received || item.total))}</td>
+    </tr>`).join('') : `<tr><td colspan="6">Nenhum lançamento em ${escapeHtml(monthLabel)}.</td></tr>`;
   document.querySelectorAll('#financeFilters .filter-pill').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === (state.financial.activeFilter || 'all')));
 }
 
 function renderFinanceMonthlyReport() {
   if (!els.financeMonthlyReport) return;
-  const totals = state.financial.monthlyTotals || {};
+  const monthKey = getFinanceMonthKey();
+  const totals = getFinanceMonthTotals(monthKey);
   const totalGeral = Object.values(totals).reduce((sum, value) => sum + (Number(value) || 0), 0);
-  els.financeMonthlyReport.innerHTML = `<div class="report-list">${paymentMethods.map(method => `<div class="report-row"><span>${escapeHtml(method)}</span><strong>${escapeHtml(formatMoney(totals[method] || 0))}</strong></div>`).join('')}<div class="report-row"><span>Total geral</span><strong>${escapeHtml(formatMoney(totalGeral))}</strong></div></div>`;
+  const rows = paymentMethods.map(method => {
+    const value = Number(totals[method] || 0);
+    const percentage = totalGeral ? Math.round((value / totalGeral) * 100) : 0;
+    return `<div class="report-row method-${escapeHtml(financeMethodClass(method))}" style="--method-color:${escapeHtml(financeMethodPalette[method])};--bar-width:${percentage}%">
+      <div class="report-method"><span class="method-dot"></span><span>${escapeHtml(method)}</span></div>
+      <div class="report-value"><strong>${escapeHtml(formatMoney(value))}</strong><small>${percentage}%</small></div>
+      <div class="report-bar"><span></span></div>
+    </div>`;
+  }).join('');
+  els.financeMonthlyReport.innerHTML = `
+    <div class="finance-chart-card">
+      <div class="finance-total-month"><span>Total do mês</span><strong>${escapeHtml(formatMoney(totalGeral))}</strong></div>
+      <div class="finance-donut" style="--pix:${totalGeral ? (totals['Pix']/totalGeral*100).toFixed(2) : 0}%;--especie:${totalGeral ? (totals['Espécie']/totalGeral*100).toFixed(2) : 0}%;--credito:${totalGeral ? (totals['Crédito']/totalGeral*100).toFixed(2) : 0}%"><span>${escapeHtml(formatMoney(totalGeral))}</span></div>
+    </div>
+    <div class="report-list">${rows}<div class="report-row total-row"><span>Total geral</span><strong>${escapeHtml(formatMoney(totalGeral))}</strong></div></div>`;
   const monthLabel = document.getElementById('financeMonthLabel');
-  if (monthLabel) monthLabel.textContent = 'Junho/2026';
+  if (monthLabel) monthLabel.textContent = getMonthLabel(monthKey);
 }
 
 function renderInstallments() {
@@ -1005,8 +1108,7 @@ function savePayment(e) {
     status: normalizeFinancialStatus(total, received)
   };
   state.financial.payments.unshift(item);
-  const currentTotal = Number(state.financial.monthlyTotals[item.method] || 0);
-  state.financial.monthlyTotals[item.method] = currentTotal + received;
+  state.financial.selectedMonth = getMonthKey(item.date);
   saveState();
   form.reset();
   const dateInput = document.getElementById('paymentDate');
@@ -1111,6 +1213,8 @@ document.getElementById('importDataBtn')?.addEventListener('click', () => docume
 document.getElementById('importDataInput')?.addEventListener('change', e => { importLocalData(e.target.files[0]); e.target.value = ''; });
 document.getElementById('clearDataBtn')?.addEventListener('click', clearLocalData);
 document.getElementById('fitPatientBtn').onclick = () => openAppointmentModal({date: state.selectedDate});
+document.getElementById('customTimeAddBtn')?.addEventListener('click', openCustomTimeAppointment);
+document.getElementById('customTimeInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); openCustomTimeAppointment(); } });
 document.querySelectorAll('.close-modal').forEach(btn => btn.onclick = () => document.getElementById('appointmentModal').classList.remove('show'));
 document.getElementById('appointmentForm').onsubmit = saveAppointment;
 document.getElementById('patientSearch').oninput = e => renderPatients(e.target.value);
@@ -1144,6 +1248,9 @@ document.getElementById('newPaymentBtn')?.addEventListener('click', () => {
 document.getElementById('paymentForm')?.addEventListener('submit', savePayment);
 document.getElementById('paymentTotal')?.addEventListener('input', updatePaymentStatusPreview);
 document.getElementById('paymentReceived')?.addEventListener('input', updatePaymentStatusPreview);
+document.getElementById('prevFinanceMonthBtn')?.addEventListener('click', () => shiftFinanceMonth(-1));
+document.getElementById('nextFinanceMonthBtn')?.addEventListener('click', () => shiftFinanceMonth(1));
+document.getElementById('currentFinanceMonthBtn')?.addEventListener('click', setCurrentFinanceMonth);
 document.querySelectorAll('#financeFilters .filter-pill').forEach(btn => btn.addEventListener('click', () => {
   state.financial.activeFilter = btn.dataset.filter;
   saveState();
