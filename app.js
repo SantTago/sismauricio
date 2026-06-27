@@ -316,9 +316,8 @@ function renderBirthdays() {
 
 function getScheduleSlots() {
   const slots = [];
-  for (let h = 7; h <= 17; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      // intervalo de almoço igual ao modelo de referência
+  for (let h = 7; h <= 20; h++) {
+    for (let m = 0; m < 60; m += 30) {
       if (h === 12 || (h === 13 && m < 30)) continue;
       slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
     }
@@ -389,7 +388,7 @@ function renderSchedule() {
     div.className = 'schedule-row schedule-grid' + (ap ? ` status-${rowStatusClass}` : ' empty') + (isCustomTime ? ' custom-time' : '') + (time === '13:30' ? ' break-before' : '');
     if (ap) {
       div.innerHTML = `
-        <span data-label="Hora">${escapeHtml(time)}${isCustomTime ? '<em class="custom-time-badge">livre</em>' : ''}</span>
+        <span data-label="Hora">${escapeHtml(time)}</span>
         <span data-label="Paciente" class="patient-status-name">${escapeHtml(ap.patient)}</span>
         <span data-label="Procedimento">${renderInlineKindSelect(ap, 'procedure', 'procedure-select')}</span>
         <span data-label="Tipo">${formatAppointmentTypeCell(ap)}</span>
